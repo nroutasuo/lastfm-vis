@@ -1,0 +1,213 @@
+/* Overall layout */
+
+body {
+    background: #D8DEC3;
+    color: #222222;
+    font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+    font-size: 14px;
+    line-height: 1.2em;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+section, footer {
+    background: #FDFFFB;
+    padding: 1em 1em;
+}
+
+header {
+    background: #D8DEC3;
+    padding: 1em 12px;
+}
+
+section#sec_input {
+    border-top: 3px solid #C8CEB3;
+}
+
+section#sec_vis {
+    background: #ffffff;
+    border-top: 1px solid #CCCCCC;
+    border-bottom: 1px solid #CCCCCC;
+    overflow-x: scroll;
+}
+
+footer {
+    border-bottom: 3px solid #C8CEB3;
+}
+
+h1 {
+    color: #4A3D3D;
+    font-size: 38.8px;
+    display: block;
+    margin-bottom: 0;
+    width: auto;
+    line-height: 0.95em;
+}
+
+header h2 {
+    margin-bottom: 0;
+    margin-top: 0em;
+    font-size: 1em;
+    color: #4A3D3D;
+}
+
+span.highlight {
+    color: #2A1D1D;
+}
+
+
+/* Defaults: headings, colours etc */
+
+h2, h3, h4, h5 {
+    color: #4A3D3D;
+}
+
+h2 { font-size: 23.3px; }
+
+a:link { 
+    color: #4A3D3D;
+    text-decoration:none;    
+    border-bottom: 1px dotted rgba(2,2,2,0.9);
+}
+a:visited    {
+    color:#4A3D3D;
+}
+
+a:hover {
+    color:#4A3D3D;
+    text-decoration: none;
+    border-bottom: none;
+}
+a:active      {color:#4A3D3D;}
+
+ul {
+    margin-left: 0px;
+    margin-top: 0.4em;
+    margin-right:0.4em;
+    margin-bottom: 0.8em;
+    margin-left: 1.6em;
+    padding: 0px;
+}
+
+input {
+    background: #ffffff;
+    display: inline-block;
+    padding: 2px;
+    border: 1px solid #4A3D3D;
+    border-radius: 5px;
+    color: #4A3D3D;
+}
+
+button {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 2px 4px;
+    background: #D9DECA;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    transition: all 0.3s ease-out;
+    box-shadow: 0 0 2px 0px #4A3D3D;
+}
+
+button:hover {
+    background: #DFE3D2;
+}
+
+
+/* Visualization / chart appearance */
+
+table.vis {
+	padding: 0;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+table.vis tr {
+}
+
+table.vis td {
+	padding: 2px 6px 2px 0px;
+    border-top: 1px solid #cccccc;
+    border-bottom: 1px solid #cccccc;
+}
+
+table.vis td.playcount {
+	color: #8D8585;
+    width: 1%;
+    white-space: nowrap;
+}
+
+table.vis td.artist {
+    font-weight: bold;
+    width: 2%;
+    white-space: nowrap;
+}
+
+table.vis td.albumcol {
+    width: 90%;
+    white-space: nowrap;
+}
+
+div.album {
+    margin: 0px 3px;
+    min-width: 1em;
+    padding: 1px 5px;
+    display: inline-block;
+    text-align: center;
+    -moz-border-radius: 0.75em;
+    border-radius: 0.75em;
+	border: 1px solid #dddddd;
+}
+
+div.album span
+{
+    display: block;
+    overflow: hidden;
+}
+
+span.album-legend {
+	border: 1px solid #dddddd;
+    padding: 1px 5px;
+    margin: 0px 2px;
+    -moz-border-radius: 0.4em;
+    border-radius: 0.4em;
+}
+
+span.many-listens, div.many-listens { 
+    background: #fDfDfD;
+}
+span.few-listens, div.few-listens { 
+    background: #dddddd; 
+}
+span.no-listens, div.no-listens { 
+    background: #BFE3AB;
+}
+
+div.no-listens span.span-name {
+    font-weight: bold;
+}
+
+div.album span.span-name {
+    letter-spacing: -1px;
+}
+
+
+/* Fine-tuning */
+
+#errormsg { color: #ee4422; }
+#infomsg { color: #333333; }
+
+.hide {
+    display: none;
+}
+
+#sec_input p {
+    margin-right: 20%;
+}
+
+@media all and (max-width: 800px) {
+
+    #sec_input p  {
+        margin-right: auto;
+    }
+}
