@@ -1,8 +1,8 @@
 
 /**
 * Last.fm album app by Noora Routasuo
-* Built with D3.js (http://d3js.org/)
-* Last.fm (http://www.last.fm/api)
+* Built with D3.js (https://d3js.org/)
+* Last.fm (https://www.last.fm/api)
 */
 
 var username = "";
@@ -60,7 +60,7 @@ function fetchData() {
 	var artist_count;
     $.ajax({ 
         type: 'POST',
-        url: 'http://ws.audioscrobbler.com/2.0/',
+        url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=user.gettopartists&' +
                'user=' + username + '&' +
                'limit=' + count + '&' +
@@ -154,7 +154,7 @@ function getArtistInfos(topartists, username )
             console.log("Fetching infos for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");            
             $.ajax({
                 type: 'POST',
-                url: 'http://ws.audioscrobbler.com/2.0/',
+                url: 'https://ws.audioscrobbler.com/2.0/',
                 data: 'method=artist.getinfo&' +
                       'artist=' + artist.name + '&' +
                       'username=' + username + '&' +
@@ -189,7 +189,7 @@ function getArtistAlbums(topartists, username )
 		console.log("Fetching albums for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");		
         $.ajax({
             type: 'POST',
-            url: 'http://ws.audioscrobbler.com/2.0/',
+            url: 'https://ws.audioscrobbler.com/2.0/',
             data: 'method=artist.gettopalbums&' +
                    'artist=' + artist.name + '&' +
                    'api_key=' + apiKey + '&' +
@@ -244,7 +244,7 @@ function getAlbumInfo(topalbums, artist, username) {
         {
 			$.ajax({
                 type: 'POST',
-                url: 'http://ws.audioscrobbler.com/2.0/',
+                url: 'https://ws.audioscrobbler.com/2.0/',
                 data: 'method=album.getinfo&' +
                        'artist=' + artist.name + '&' +
                        'api_key=' + apiKey + '&' +
