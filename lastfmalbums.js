@@ -1,11 +1,11 @@
 
 /**
 * Last.fm album app by Noora Routasuo
-* Built with 
-* JavaScript Last.fm API (https://github.com/fxb/javascript-last.fm-api/)
-* D3.js (http://d3js.org/)
+* Built with D3.js (http://d3js.org/)
+* Last.fm (http://www.last.fm/api)
 */
 
+var username = "";
 var artistlimit = 50;
 var albumlimit = 50;
 var albumlimit_display = 25;
@@ -17,11 +17,6 @@ $(document).ready(function() {
 });
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
-var apiSecret = '6dbb762ff870c4eb50c50cb1d1a32c1a'
-var lastfm = new LastFM({
-	apiKey    : apiKey,
-	apiSecret : apiSecret,
-});
 
 var ok_artists;
 var progress_artists;
@@ -44,7 +39,7 @@ function fetchData() {
     $("#sec_vis").children().remove();
     
 	// Get and check username
-	var username = $("#username").val();
+	username = $("#username").val();
     if(username.length < 1) {
         stopLoading("Enter a Last.fm username.", "");
         return;
@@ -58,23 +53,31 @@ function fetchData() {
     }
     artistlimit = count;
 
+    var period = 'overall';
+    
 	// Load top artists
     working = true;
 	var artist_count;
-	lastfm.user.getTopArtists(
-		{ user: username, limit: artistlimit, api_key: apiKey }, 
-		{
-			success: function(data) {
-				showInfo("Top artists loaded. Loading albums..");
-				showArtists(data.topartists, username);
-				getArtistInfos( data.topartists, username );
-				getArtistAlbums( data.topartists, username );
-				return true;
-			}, 
-			error: function(code, message) {
-                stopLoading("", message);
-				return false;
-			}
+    $.ajax({ 
+        type: 'POST',
+        url: 'http://ws.audioscrobbler.com/2.0/',
+        data: 'method=user.gettopartists&' +
+               'user=' + username + '&' +
+               'limit=' + count + '&' +
+               'period' + period + '&' +
+               'api_key=' + apiKey + '&' +
+               'format=json',
+        success: function (data) {
+            showInfo("Top artists loaded. Loading albums..");
+            showArtists(data.topartists, username);
+            getArtistInfos( data.topartists, username );
+            getArtistAlbums( data.topartists, username );
+            return true;
+        }, 
+        error: function (code, message) {
+            stopLoading("", message);
+            return false;
+        }
 	});
 }
 
@@ -87,8 +90,7 @@ function cancel() {
 }
 
 // Show artist data and create basic results table
-function showArtists(topartists, username) {
-	
+function showArtists(topartists, username) {	
 	if(!topartists.artist) {
         stopLoading("", "No artists found.");
 		return;
@@ -149,21 +151,26 @@ function getArtistInfos(topartists, username )
         }
         else
         {
-            console.log("Fetching infos for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");
-            lastfm.artist.getInfo(
-                { artist: artist.name, api_key: apiKey },
-                {
-                    success: function(data) {
-                        if(working)
-                        {
-                            artist_infos[artist_id] = data.artist;
-                            getNextArtist(i + 1);
-                        }
-                    }, 
-                    error: function(code, message) {
-                        console.log("Fetching info for artist " + artist.name + " failed.");
-                        showError(message + " (Error code: " + code + ")");
+            console.log("Fetching infos for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");            
+            $.ajax({
+                type: 'POST',
+                url: 'http://ws.audioscrobbler.com/2.0/',
+                data: 'method=artist.getinfo&' +
+                      'artist=' + artist.name + '&' +
+                      'username=' + username + '&' +
+                      'api_key=' + apiKey + '&' +
+                      'format=json',
+                dataType: 'jsonp',
+                success: function(data) {
+                    if (working) {
+                        artist_infos[artist_id] = data.artist;
+                        getNextArtist(i + 1);
                     }
+                }, 
+                error: function (code, message) {
+                    console.log("Fetching info for artist " + artist.name + " failed.");
+                    showError(message + " (Error code: " + code + ")");
+                }
             });
         }
 	}
@@ -175,37 +182,45 @@ function getArtistAlbums(topartists, username )
 {  
 	// Get albums for each artist one at a time (reduce conflicts)
 	var getNextArtist = function(i) {
-        
-		if(i >= topartists.artist.length) return false;
+		if (i >= topartists.artist.length) 
+            return false;
 		var artist = topartists.artist[i];
         progress_artists++;
-		console.log("Fetching albums for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");
-		lastfm.artist.getTopAlbums(
-            { artist: artist.name, limit: albumlimit, api_key: apiKey },
-            {
-                success: function(data) {
-                    if(working)
-                    {
-                        getAlbumInfo(data.topalbums, artist, username);
-                        getNextArtist(i + 1);
-                    }
-                }, 
-                error: function(code, message) {
-					console.log("Fetching albums info for artist " + artist.name + " failed.");
-                    showError(message + " (Error code: " + code + ")");
+		console.log("Fetching albums for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");		
+        $.ajax({
+            type: 'POST',
+            url: 'http://ws.audioscrobbler.com/2.0/',
+            data: 'method=artist.gettopalbums&' +
+                   'artist=' + artist.name + '&' +
+                   'api_key=' + apiKey + '&' +
+                   'limit=' + albumlimit + '&' +
+                   'format=json',
+            dataType: 'jsonp',
+            success: function(data) {
+                if (!data.topalbums) {
+                    console.log("Couldn't get top albums for " + artist.name);
+                    return;
                 }
+                if (working) {
+                    getAlbumInfo(data.topalbums, artist, username);
+                    getNextArtist(i + 1);
+                }
+            }, 
+            error: function(code, message) {
+                console.log("Fetching albums info for artist " + artist.name + " failed.");
+                showError(message + " (Error code: " + code + ")");
+            }
         });
 	}
 	getNextArtist(0);
 	artist_count = topartists.artist.length;
 }
 
-// Fetach additional album info for an artist before displaying albums
+// Fetch additional album info for an artist before displaying albums
 function getAlbumInfo(topalbums, artist, username) {
 	console.log("Collecting album info for artist " + artist.name);
 	var total_albums = 0;
-	if(topalbums && topalbums.album) total_albums = topalbums.album.length;
-	
+	if (topalbums && topalbums.album) total_albums = topalbums.album.length;
     // Get additional data, one at a time
 	var getNextAlbum = function getNext(i) {
         if(!working) {
@@ -225,23 +240,35 @@ function getAlbumInfo(topalbums, artist, username) {
         // console.log("Collecting album info for album " + album.name + "(" + (i + 1) + "/" + (total_albums) + ")");
 		
         var filter1 = filterAlbumByBasicData(album, topalbums.album, false);
-		if(filter1.length <= 0) 
+		if (filter1.length <= 0) 
         {
-			lastfm.album.getInfo(
-				{ artist: artist.name, album: album.name, autocorrect: 1, username: username, api_key: apiKey },
-				{
-					success: function(data) {
-                        var filter2 = filterAlbumByDetailedInfo(data.album, topalbums.album, artist);
-                        if(filter2.length <= 0)
-                            album_infos[getAlbumID(album.name)] = data;
-                        else
-                            registerFiltered(filter2, album, artist.name);                            
-                        getNextAlbum(i+1);
-					}, 
-					error: function(code, message) {
-						console.log("Fetching album info for album " + album.name + " by " + artist.name + " failed.");
-						showError(message + " (Error code: " + code + ")");
-					}
+			$.ajax({
+                type: 'POST',
+                url: 'http://ws.audioscrobbler.com/2.0/',
+                data: 'method=album.getinfo&' +
+                       'artist=' + artist.name + '&' +
+                       'api_key=' + apiKey + '&' +
+                       'album=' + album.name + '&' +
+                       'autocorrect=1&' +
+                       'username=' + username + '&' +
+                       'format=json',
+                dataType: 'jsonp',
+                success: function (data) {
+                    if (!data.album) {
+                        console.log(data.message + " | " + album.name);
+                        return;
+                    }
+                    var filter2 = filterAlbumByDetailedInfo(data.album, topalbums.album, artist);
+                    if(filter2.length <= 0)
+                        album_infos[getAlbumID(album.name)] = data;
+                    else
+                        registerFiltered(filter2, album, artist.name);                            
+                    getNextAlbum(i+1);
+                }, 
+                error: function(code, message) {
+                    console.log("Fetching album info for album " + album.name + " by " + artist.name + " failed.");
+                    showError(message + " (Error code: " + code + ")");
+                }
 			});
 		} else {
             registerFiltered(filter1, album, artist.name);
@@ -492,7 +519,10 @@ function filterAlbumByBasicData(album, allalbums, skipDuplicateSearch) {
 	return "";
 }
 
-function filterAlbumByDetailedInfo( albuminfo, allalbums, artist ) {
+function filterAlbumByDetailedInfo(albuminfo, allalbums, artist) {
+    if (!albuminfo)
+        return "";
+    
     var album_listeners = albuminfo.listeners;
     var album_releasedate = albuminfo.releasedate;
     var album_playcount = albuminfo.playcount;
