@@ -26,6 +26,14 @@
 	<input type="text" placeholder="" id="username">
 	<label>Number of artists:</label>
 	<input type="number" placeholder="" id="artistcount" min="1" max="1000" value="25">
+    <select id="artistperiod">
+        <option value="overall">All</option>
+        <option value="7day">7 Days</option>
+        <option value="1month">1 Month</option>
+        <option value="3month">3 Months</option>
+        <option value="6month">6 Months</option>
+        <option value="12month">12 Months</option>
+    </select>
 	<button class="btn" onclick="fetchData();">Submit</button>
 	<button class="btn" onclick="cancel();">Cancel</button>
 	<p id="errormsg"></p>

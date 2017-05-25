@@ -52,8 +52,8 @@ function fetchData() {
         return;
     }
     artistlimit = count;
-
-    var period = 'overall';
+    
+    var period = $("#artistperiod").val();
     
 	// Load top artists
     working = true;
