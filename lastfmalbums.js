@@ -5,11 +5,16 @@
 * Last.fm (https://www.last.fm/api)
 */
 
+var vistype;
 var username = "";
 var artistlimit = 50;
 var albumlimit = 50;
 var albumlimit_display = 25;
 var working = false;
+
+var vistypeCloud = "cloud";
+var vistypeTimeline = "timeline";
+var vistypeAlbumChart = "albums";
 
 // Set up blink
 $(document).ready(function() {
@@ -26,6 +31,63 @@ var artist_count;
 
 var album_infos = [];
 var artist_infos = [];
+
+$(document).ready(function() {
+    $("#sec_tabs .tabbutton")[0].click();
+});
+
+function selectVis(evt, vis) {
+    var tablinks = document.getElementsByClassName("tabbutton");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    evt.target.className += " active";
+
+    vistype = vis;
+    
+    // TODO set better default and/or label for number of artists depending on vis
+    
+    // update page
+    var textVisIntro = "";
+    var textVisDetails = "";
+    var showInputNumArtists = false;
+    var showInputArtistPeriod = false;
+    var showInputTagFilters = false;
+    switch (vis) {
+        
+        case vistypeTimeline:
+            textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
+            textVisDetails = "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled relative to total counts for that period. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
+            showInputNumArtists = true;
+            showInputArtistPeriod = false;
+            showInputTagFilters = true;
+            break;
+        
+        case vistypeCloud:
+            textVisIntro = "A simple tag cloud based on a user's top artists.";
+            textVisDetails = "Tag count is based on the number of times it's listed for top artists. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
+            showInputNumArtists = true;
+            showInputArtistPeriod = true;
+            showInputTagFilters = true;
+            break;
+        
+        case vistypeAlbumChart:
+            textVisIntro = "Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.";
+            textVisDetails = "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
+            showInputNumArtists = true;
+            showInputArtistPeriod = true;
+            showInputTagFilters = false;
+            break;
+    }
+    
+    $("#visintro").text(textVisIntro);
+    $("#visdetails").text(textVisDetails);
+    $("#input_numartists").toggle(showInputNumArtists);
+    $("#input_artistperiod").toggle(showInputArtistPeriod);
+    $("#input_tagfilters").toggle(showInputTagFilters);
+}
 
 // Get initial data (top artists) from Last.fm according to the given username
 function fetchData() {
@@ -47,7 +109,7 @@ function fetchData() {
     
     // Get and check artist count
 	var count = Number($("#artistcount").val());
-    if(count <= 0) {
+    if (count <= 0) {
         stopLoading("Enter a number of top artists to load.", "");
         return;
     }
@@ -55,8 +117,21 @@ function fetchData() {
     
     var period = $("#artistperiod").val();
     
+    filterCountries = $("#filter-countries").is(':checked');
+    filterDecades = $("#filter-decades").is(':checked');
+    
 	// Load top artists
     working = true;
+    
+    if (vistype === vistypeCloud)
+        makeCloud(username, count, period);
+    else if(vistype === vistypeTimeline)
+        makeTimeline(username, count);
+    else if (vistype === vistypeAlbumChart)
+        makeAlbumChart(username, count, period);
+}
+
+function makeAlbumChart(username, count, period) {
 	var artist_count;
     $.ajax({ 
         type: 'POST',

@@ -7,21 +7,26 @@ body {
     font-size: 14px;
     line-height: 1.2em;
     margin: 0;
+    padding: 0;
     overflow-x: hidden;
 }
 
-section, footer {
+section, footer, header {
     background: #FDFFFB;
-    padding: 1em 1em;
+    padding: 1em 1.5em;
 }
 
-header {
+section#sec_tabs {
+    padding: 0 0;
+}
+
+header, footer {
     background: #D8DEC3;
-    padding: 1em 12px;
 }
 
 section#sec_input {
     border-top: 3px solid #C8CEB3;
+    border-bottom: 3px solid #C8CEB3;
 }
 
 section#sec_vis {
@@ -29,6 +34,7 @@ section#sec_vis {
     border-top: 1px solid #CCCCCC;
     border-bottom: 1px solid #CCCCCC;
     overflow-x: scroll;
+    padding: 20px;
 }
 
 footer {
@@ -113,6 +119,37 @@ button:hover {
     background: #DFE3D2;
 }
 
+div.tabbar {
+    border: solid #ccc;
+    border-width: 3px 0px;
+}
+
+button.tabbutton {    
+    background-color: inherit;
+    float: left;
+    border: none;
+    cursor: pointer;
+    padding: 0.5em 2em;
+    margin: 0px;
+    border-radius: 0px;
+    font-weight: bold;
+}
+
+div.tabbar button:hover {
+    background-color: #ddd;
+}
+
+div.tabbar button.active {
+    background-color: #ccc;
+}
+
+
+.tabbar {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
 
 /* Visualization / chart appearance */
 
@@ -189,6 +226,97 @@ div.no-listens span.span-name {
 
 div.album span.span-name {
     letter-spacing: -1px;
+}
+
+/* SVG */
+
+li.tag {
+    display: inline-block;
+    margin: 3px;
+    border: 1px solid #ddd;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #f9f9f9;
+}
+
+.tag-size-1 {
+    font-weight: 100;
+}
+
+.tag-size-2 {
+    font-weight: 200;
+}
+
+.tag-size-3 {
+    font-weight: 300;
+}
+
+.tag-size-4 {
+    font-weight: 400;
+}
+
+.tag-size-5 {
+    font-weight: 500;
+}
+
+.tag-size-6 {
+    font-weight: 600;
+}
+
+.tag-size-7 {
+    font-weight: 700;
+}
+
+.tag-size-8 {
+    font-weight: 800;
+}
+
+.tag-size-9 {
+    font-weight: 900;
+}
+
+.tag-size-10 {
+    font-weight: 900;
+}
+
+.timeline-year {
+    display: table-cell;
+}
+
+/* Visualization: svg */
+
+.axis text {
+  font: 10px sans-serif;
+  color: #999;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+path {
+    stroke: black;
+}
+
+.tagline {
+    fill: none;
+    stroke: #999;
+}
+
+.tagline.highlighted {
+    stroke: black;
+    stroke-width: 2px;
+}
+
+.tagname {
+    fill: #999;
+}
+
+.tagname.highlighted {
+    fill: black;
 }
 
 

@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Last.fm Album Charter</title>
+    <title>Last.fm Tools</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-    <meta name="description" content="A Last.fm app for finding albums you might like.">
+    <meta name="description" content="Last.fm tools and visualizations. Tag cloud, tag timeline, album charter.">
     <meta name="author" content="Noora Routasuo">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <link rel="stylesheet" href="app.css">
@@ -13,29 +13,60 @@
 <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
 <script type="text/javascript" src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="lastfmalbums.js"></script>
-
+<script type="text/javascript" src="lastfmtags.js"></script>
 
 <header>
-    <h1><span class="highlight">Last.fm</span> Album Charter</h1>
-    <h2>Find albums you missed & albums you should listen to</h2>
+    <h1><span class="highlight">Last.fm</span> Tools</h1>
+    <h2>Visualizations of your listening data</h2>
 </header>
 
+<section id="sec_tabs">
+    <div class="tabbar">
+        <button class="tabbutton" onclick="selectVis(event, 'timeline')">Tag Timeline</button>
+        <button class="tabbutton" onclick="selectVis(event, 'cloud')">Tag Cloud</button>
+        <button class="tabbutton" onclick="selectVis(event, 'albums')">Album Charter</button>
+    </tabbar>
+</section>
+
+<section id="sec_vis_intro">
+	<p id="visintro"></p>
+</section>
+
 <section id="sec_input">
-	<p>Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.</p>
-	<label>Your <a href="http://www.last.fm/">Last.fm</a> username:</label>
-	<input type="text" placeholder="" id="username">
-	<label>Number of artists:</label>
-	<input type="number" placeholder="" id="artistcount" min="1" max="1000" value="25">
-    <select id="artistperiod">
-        <option value="overall">All</option>
-        <option value="7day">7 Days</option>
-        <option value="1month">1 Month</option>
-        <option value="3month">3 Months</option>
-        <option value="6month">6 Months</option>
-        <option value="12month">12 Months</option>
-    </select>
+    <span id="input_username">
+        <label>Your <a href="http://www.last.fm/">Last.fm</a> username:</label>
+        <input type="text" placeholder="" id="username">
+    </span>
+    <span id="input_numartists">
+        <label>Number of artists:</label>
+        <input type="number" placeholder="" id="artistcount" min="1" max="100" value="10">
+    </span>
+    <span id="input_artistperiod">
+        <label>Period:</label>
+        <select id="artistperiod">
+            <option value="overall">All</option>
+            <option value="7day">7 Days</option>
+            <option value="1month">1 Month</option>
+            <option value="3month">3 Months</option>
+            <option value="6month">6 Months</option>
+            <option value="12month">12 Months</option>
+        </select>
+    </span>
+    <span id="input_tagfilters">
+        <span>
+            <label><input type="checkbox" id="filter-countries" value="countries">
+            Filter countries</label>
+        </span>
+        <span>
+            <label><input type="checkbox" id="filter-decades" value="decades">
+            Filter decades</label>
+        </span>
+    </span>
 	<button class="btn" onclick="fetchData();">Submit</button>
 	<button class="btn" onclick="cancel();">Cancel</button>
+</section>
+
+<section id="sec_status">
 	<p id="errormsg"></p>
 	<p id="infomsg"></p>
 </section>
@@ -43,10 +74,13 @@
 <section id="sec_vis">
 </section>
 
+<section id="sec_details">
+    <p id="visdetails"></p>
+</section>
+
 <footer>
     <h2>About</h2>
-    <p>Last.fm Album Charter by <a href="https://github.com/nroutasuo">Noora Routasuo</a>. Albums are filtered to avoid duplicates, special editions, demos, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway.</p>
-	<p>Built with <a href="http://d3js.org/">D3.js</a>.</p>
+    <p>Last.fm Tools by <a href="https://github.com/nroutasuo">Noora Routasuo</a>. Built with <a href="http://d3js.org/">D3.js</a>.</p>
 </footer>
 
 </body>
