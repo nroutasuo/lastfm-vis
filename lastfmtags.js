@@ -1,18 +1,14 @@
-
 /**
-* Last.fm tags visualization by Noora Routasuo
+* Tag Cloud and Tag Timeline visualizations
+* Last.fm tools by Noora Routasuo
+* Built with D3.js (https://d3js.org/)
+* Last.fm (https://www.last.fm/api)
 */
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
-var apiSecret = '6dbb762ff870c4eb50c50cb1d1a32c1a';
 
 var tags = {};
 var tagsByArtist = {};
-
-// TODO (cloud) weight tags by artist playcount
-
-var filterCountries = false;
-var filterDecades = false;
 
 function makeCloud(username, count, period) {
     var onArtistsDone = function (data) {
@@ -75,7 +71,7 @@ function fetchWeeklyCharts (username, callback) {
 function fetchWeeklyArtistCharts(username, charts, count) {
     count = Math.min(count, 20);
     // TODO choose time bins depending on how much data the user has - years or months
-    var chartsToGet = Math.min(charts.chart.length, 52*10);
+    var chartsToGet = Math.min(charts.chart.length, 52*15);
     var chartsDone = 0;
     var artistsByYear = {};
     var onWeekDone = function (data) {
@@ -87,6 +83,8 @@ function fetchWeeklyArtistCharts(username, charts, count) {
         var maxArtists = Math.min(data.weeklyartistchart.artist.length, count);
         for (var j = 0; j < maxArtists; j++) {
             var artist = data.weeklyartistchart.artist[j];
+            if (artist.playcount < 2)
+                continue;
             if (artistsByYear[year].indexOf(artist) < 0) {
                 artistsByYear[year].push(artist);
             }
@@ -160,13 +158,13 @@ function fetchTagsByYear(artistsByYear) {
 function fetchTagsForYear(year, artistsByYear) {
     console.log("Fetching tags for " + artistsByYear[year].length + " artists for the year " + year);
     
-    tags[year] = {};
-    
     var keys = Object.keys(artistsByYear);
     var yearIndex = keys.indexOf(year);
 
     var totalartists = artistsByYear[year].length;
     var artistsready = 0;
+    
+    tags[year] = {};
     
     var onArtistOK = function (data) {
         tags[year][data.toptags['@attr'].artist] = data;
@@ -176,10 +174,12 @@ function fetchTagsForYear(year, artistsByYear) {
         artistsready++;
         showLoaded(artistsready / totalartists * 100);
         if (artistsready == totalartists) {
-            if (yearIndex < keys.length - 1)
+            if (yearIndex < keys.length - 1) {
                 fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
-            else
+            } else {
                 buildTimelineVis();
+                stopLoading("Done.", "");
+            }
         }
     };
 
@@ -190,6 +190,7 @@ function fetchTagsForYear(year, artistsByYear) {
     }
     
     if (artistsByYear[year].length === 0) {
+        delete tags[year];
         totalartists = 1;
         onArtistReady();
     }
@@ -248,6 +249,7 @@ function buildCloudVis() {
         $("#sec_vis ul").append(li);
     }
     console.log("Showing tags: " + max + "/" + sortedNames.length);
+    stopLoading("Done.", "");
 }
 
 function buildTimelineVis() {
@@ -412,10 +414,6 @@ function GetTimelineData() {
     return data;
 }
 
-function clearVis() {
-    $("#sec_vis").empty();    
-}
-
 function getTagCounts(tags) {
     var tagcounts = {};
     var tagcounttotal = 0;
@@ -476,30 +474,6 @@ function filterTagNameDecades(name) {
     if (match != null && match.length > 0)
         return false;
     return true;
-}
-
-function stopLoading(info, error) {
-    showInfo(info);
-    showError(error);
-    working = false;
-}
-
-function showLoaded(percentage) {
-    showInfo((percentage).toFixed(0) + "% loaded");
-}
-
-function showError(msg) {
-	if(msg.length > 0)
-		$("#errormsg").text("Error: " + msg);
-	else
-		$("#errormsg").text("");
-}
-
-function showInfo(msg) {
-	if(msg.length > 0)
-		$("#infomsg").text(msg);
-	else
-		$("#infomsg").text("");
 }
 
 // TODO extend to user-specified filter

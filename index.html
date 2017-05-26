@@ -12,6 +12,7 @@
 
 <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
 <script type="text/javascript" src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="ui.js"></script>
 <script type="text/javascript" src="lastfmalbums.js"></script>
 <script type="text/javascript" src="lastfmtags.js"></script>
 
@@ -33,15 +34,15 @@
 </section>
 
 <section id="sec_input">
-    <span id="input_username">
+    <span id="input_username" class="inputcontainer">
         <label>Your <a href="http://www.last.fm/">Last.fm</a> username:</label>
         <input type="text" placeholder="" id="username">
     </span>
-    <span id="input_numartists">
+    <span id="input_numartists" class="inputcontainer">
         <label>Number of artists:</label>
         <input type="number" placeholder="" id="artistcount" min="1" max="100" value="10">
     </span>
-    <span id="input_artistperiod">
+    <span id="input_artistperiod" class="inputcontainer">
         <label>Period:</label>
         <select id="artistperiod">
             <option value="overall">All</option>
@@ -52,7 +53,7 @@
             <option value="12month">12 Months</option>
         </select>
     </span>
-    <span id="input_tagfilters">
+    <span id="input_tagfilters" class="inputcontainer">
         <span>
             <label><input type="checkbox" id="filter-countries" value="countries">
             Filter countries</label>
@@ -62,8 +63,8 @@
             Filter decades</label>
         </span>
     </span>
-	<button class="btn" onclick="fetchData();">Submit</button>
-	<button class="btn" onclick="cancel();">Cancel</button>
+	<button class="btn" type="submit" onclick="startVis();">Submit</button>
+	<button class="btn" onclick="cancelVis();">Cancel</button>
 </section>
 
 <section id="sec_status">
