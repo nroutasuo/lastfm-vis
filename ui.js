@@ -80,7 +80,7 @@ function startVis() {
     if (!selectionsOK)
         return;
     
-	// Load top artists
+	$("#visheader").text(makeVisTitle());
     working = true;
     showLoaded(0);
     
@@ -124,6 +124,19 @@ function getSelections() {
     filterDecades = $("#filter-decades").is(':checked');
     
     return true;
+}
+
+function makeVisTitle() {
+    switch (vistype) {
+        case vistypeTimeline:
+            return "Tag Timeline (" + username + ")";
+        case vistypeCloud:
+            return "Tag Cloud (" + username + ")";
+        case vistypeAlbumChart:
+            return "Album Charter (" + username + ")";
+        default:
+            return "??";
+    }
 }
 
 function stopLoading(info, error) {
