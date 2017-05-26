@@ -24,8 +24,7 @@ header, footer {
     background: #D8DEC3;
 }
 
-section#sec_input {
-    border-top: 3px solid #C8CEB3;
+section#sec_vis_intro {
     border-bottom: 3px solid #C8CEB3;
 }
 
@@ -143,6 +142,9 @@ div.tabbar button.active {
     background-color: #ccc;
 }
 
+.inputcontainer {
+    transition: 0.2s;
+}
 
 .tabbar {
     overflow: hidden;
@@ -329,13 +331,13 @@ path {
     display: none;
 }
 
-#sec_input p {
+p {
     margin-right: 20%;
 }
 
 @media all and (max-width: 800px) {
 
-    #sec_input p  {
+    p {
         margin-right: auto;
     }
 }

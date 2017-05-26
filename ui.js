@@ -38,6 +38,7 @@ function selectVis(evt, vis) {
     
     var textVisIntro = "";
     var textVisDetails = "";
+    var textHeader = "";
     var showInputNumArtists = false;
     var showInputArtistPeriod = false;
     var showInputTagFilters = false;
@@ -46,6 +47,7 @@ function selectVis(evt, vis) {
         case vistypeTimeline:
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
             textVisDetails = "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled relative to total counts for that period. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
+            textHeader = "Tag Timeline";
             showInputNumArtists = true;
             showInputTagFilters = true;
             break;
@@ -53,6 +55,7 @@ function selectVis(evt, vis) {
         case vistypeCloud:
             textVisIntro = "A simple tag cloud based on a user's top artists.";
             textVisDetails = "Tag count is based on the number of times it's listed for top artists. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
+            textHeader = "Tag Cloud";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
             showInputTagFilters = true;
@@ -61,6 +64,7 @@ function selectVis(evt, vis) {
         case vistypeAlbumChart:
             textVisIntro = "Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.";
             textVisDetails = "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
+            textHeader = "Album Charter";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
             break;
@@ -68,6 +72,7 @@ function selectVis(evt, vis) {
     
     $("#visintro").text(textVisIntro);
     $("#visdetails").text(textVisDetails);
+    $("#inputheader").text(textHeader);
     
     fadeToggleIf($("#input_numartists"), showInputNumArtists);
     fadeToggleIf($("#input_artistperiod"), showInputArtistPeriod);
@@ -127,11 +132,12 @@ function getSelections() {
 }
 
 function makeVisTitle() {
+    var periodName = period.replace(/(\d)/g, "$1-").replace(/\b[a-z]/g,function(f) { return f.toUpperCase(); });
     switch (vistype) {
         case vistypeTimeline:
-            return "Tag Timeline (" + username + ")";
+            return "Tag Timeline (" + username +  " Weekly Top-" + artistlimit + ")";
         case vistypeCloud:
-            return "Tag Cloud (" + username + ")";
+            return "Tag Cloud (" + username + " " + periodName + " Top-" + artistlimit + ")";
         case vistypeAlbumChart:
             return "Album Charter (" + username + ")";
         default:
