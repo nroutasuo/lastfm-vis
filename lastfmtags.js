@@ -9,8 +9,10 @@ var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 
 var tags = {};
 var tagsByArtist = {};
+var filteredTags = [];
 
 function makeCloud(username, count, period) {
+    filteredTags = [];
     var onArtistsDone = function (data) {
         fetchTags(data);
     }
@@ -18,6 +20,7 @@ function makeCloud(username, count, period) {
 }
 
 function makeTimeline(username, count) {
+    filteredTags = [];
     var onChartsDone = function (data) {
         fetchWeeklyArtistCharts(username, data.weeklychartlist, count);
     }
@@ -425,6 +428,7 @@ function getTagCounts(tags) {
             tag = tags[key].toptags.tag[i];
             tagname = cleanupTagName(tag.name);
             if (!filterTagName(tagname)) {
+                recordFilteredTag(tagname);
                 continue;
             }
             
@@ -450,7 +454,13 @@ function cleanupTagName(name) {
     return name.toLowerCase().replace(/-/g, " ");
 }
 
-// TODO show filtered names to the user
+function recordFilteredTag(name) {
+    if (filteredTags.indexOf(name) < 0) {
+        filteredTags.push(name);
+        showVisDetails("Filtered tags: " + filteredTags.join(", "));
+    }
+}
+
 function filterTagName(name) {
     if (name === "seen live")
         return false;
@@ -470,7 +480,7 @@ function filterTagNameCountries(name) {
 }
 
 function filterTagNameDecades(name) {
-    var match = name.match(/^(\d\d)+(s)?$/);
+    var match = name.match(/^(20)?(19)?(\d\d)(s)?$/);
     if (match != null && match.length > 0)
         return false;
     return true;

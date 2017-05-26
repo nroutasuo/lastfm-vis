@@ -37,7 +37,6 @@ function selectVis(evt, vis) {
     vistype = vis;
     
     var textVisIntro = "";
-    var textVisDetails = "";
     var textHeader = "";
     var showInputNumArtists = false;
     var showInputArtistPeriod = false;
@@ -46,7 +45,6 @@ function selectVis(evt, vis) {
         
         case vistypeTimeline:
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
-            textVisDetails = "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled relative to total counts for that period. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
             textHeader = "Tag Timeline";
             showInputNumArtists = true;
             showInputTagFilters = true;
@@ -54,7 +52,6 @@ function selectVis(evt, vis) {
         
         case vistypeCloud:
             textVisIntro = "A simple tag cloud based on a user's top artists.";
-            textVisDetails = "Tag count is based on the number of times it's listed for top artists. Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined."
             textHeader = "Tag Cloud";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
@@ -63,7 +60,6 @@ function selectVis(evt, vis) {
         
         case vistypeAlbumChart:
             textVisIntro = "Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.";
-            textVisDetails = "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
             textHeader = "Album Charter";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
@@ -71,7 +67,6 @@ function selectVis(evt, vis) {
     }
     
     $("#visintro").text(textVisIntro);
-    $("#visdetails").text(textVisDetails);
     $("#inputheader").text(textHeader);
     
     fadeToggleIf($("#input_numartists"), showInputNumArtists);
@@ -85,9 +80,11 @@ function startVis() {
     if (!selectionsOK)
         return;
     
-	$("#visheader").text(makeVisTitle());
     working = true;
+	$("#visheader").text(makeVisTitle());
+    $("#visdetailstype").text(getVisTypeDetails(vistype));
     showLoaded(0);
+    showVisDetails("");
     
     if (vistype === vistypeCloud)
         makeCloud(username, artistlimit, period);
@@ -145,6 +142,20 @@ function makeVisTitle() {
     }
 }
 
+function getVisTypeDetails() {
+    var tagscommon = "Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
+    switch (vistype) {
+        case vistypeTimeline:
+            return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled relative to total counts for that period. " + tagscommon; 
+        case vistypeCloud:
+            return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
+        case vistypeAlbumChart:
+            textVisDetails = "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
+        default:
+            return "";
+    }
+}
+
 function stopLoading(info, error) {
     showInfo(info);
     showError(error);
@@ -152,17 +163,24 @@ function stopLoading(info, error) {
 }
 
 function showError(msg) {
-	if(msg.length > 0)
+	if (msg.length > 0)
 		$("#errormsg").text("Error: " + msg);
 	else
 		$("#errormsg").text("");
 }
 
 function showInfo(msg) {
-	if(msg.length > 0)
+	if (msg.length > 0)
 		$("#infomsg").text(msg);
 	else
 		$("#infomsg").text("");
+}
+
+function showVisDetails(msg) {
+	if (msg.length > 0)
+		$("#visdetailsresult").text(msg);
+	else
+		$("#visdetailsresult").text("");
 }
 
 function showLoaded(percentage) {
