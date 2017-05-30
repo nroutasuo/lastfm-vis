@@ -79,7 +79,7 @@ function fetchWeeklyArtistCharts(username, charts, count) {
     var artistsByYear = {};
     var onWeekDone = function (data) {
         chartsDone++;
-        showLoaded(chartsDone / chartsToGet * 100);
+        showLoaded(chartsDone / chartsToGet * 50);
         var year = new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear();
         if (!artistsByYear[year])
             artistsByYear[year] = [];
@@ -132,8 +132,6 @@ function fetchTags(artists) {
     var totalartists = artists.topartists.artist.length;
     var artistsready = 0;
     
-    showLoaded(0);
-    
     var onArtistOK = function (data) {
         tags[data.toptags['@attr'].artist] = data;
     };
@@ -175,7 +173,9 @@ function fetchTagsForYear(year, artistsByYear) {
     
     var onArtistReady = function () {
         artistsready++;
-        showLoaded(artistsready / totalartists * 100);
+        var yearPercentage = yearIndex / keys.length;
+        yearPercentage += artistsready / totalartists / keys.length;
+        showLoaded(50 + yearPercentage * 50);
         if (artistsready == totalartists) {
             if (yearIndex < keys.length - 1) {
                 fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
