@@ -230,6 +230,19 @@ div.album span.span-name {
     letter-spacing: -1px;
 }
 
+.tooltip {
+    position: absolute;			
+    text-align: center;			
+    width: 100px;					
+    height: 50px;					
+    padding: 2px;
+    border: 1px solid #888;	
+    font-size: 80%;
+    background: #fff;
+    border-radius: 5px;			
+    pointer-events: none;		
+}
+
 /* SVG */
 
 li.tag {
@@ -319,6 +332,16 @@ path {
 
 .tagname.highlighted {
     fill: black;
+}
+
+svg.highlighted .highlightable {
+    fill-opacity: 0.5;
+    stroke-opacity: 0.5;
+}
+
+svg.highlighted .highlighted {
+    fill-opacity: 1;
+    stroke-opacity: 1;
 }
 
 

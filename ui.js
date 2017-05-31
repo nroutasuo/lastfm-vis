@@ -146,7 +146,7 @@ function getVisTypeDetails() {
     var tagscommon = "Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
     switch (vistype) {
         case vistypeTimeline:
-            return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled relative to total counts for that period. " + tagscommon; 
+            return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
         case vistypeCloud:
             return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
         case vistypeAlbumChart:

@@ -177,10 +177,12 @@ function fetchTagsForYear(year, artistsByYear) {
         yearPercentage += artistsready / totalartists / keys.length;
         showLoaded(50 + yearPercentage * 50);
         if (artistsready == totalartists) {
+            if (yearIndex > 0) 
+                buildTimelineVis();
+                
             if (yearIndex < keys.length - 1) {
                 fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
             } else {
-                buildTimelineVis();
                 stopLoading("Done.", "");
             }
         }
@@ -257,10 +259,11 @@ function buildCloudVis() {
 
 function buildTimelineVis() {
     console.log("Building timeline..");
+    clearVis();
     
     // Set the dimensions of the canvas / graph
     // TODO limit width by number of data points on x, max ~300 px per point
-    var	margin = {top: 10, right: 120, bottom: 30, left: 10},
+    var	margin = {top: 10, right: 150, bottom: 30, left: 25},
         width = getMaxVisWidth() - margin.left - margin.right,
         height = getMaxVisHeight() - margin.top - margin.bottom;
     
@@ -270,6 +273,7 @@ function buildTimelineVis() {
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
         .append("g")
+            .attr("class", "visarea")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     
     // Set up data
@@ -285,32 +289,51 @@ function buildTimelineVis() {
 	x.domain(d3.extent(data, function(d) { return d.date; }));
     var	y = d3.scale.linear().domain([0, 100]).range([height, 0]);
      
-    // Define the axes
-    var	xAxis = d3.svg.axis().scale(x)
-        .orient("bottom").ticks(years.length);
-    var	yAxis = d3.svg.axis().scale(y)
-        .orient("right").ticks(5);
-     
     // Define the line
     var currenttag = null;
     var	tagline = d3.svg.line()
+        .interpolate("cardinal")
+        .tension(0.8)
         .x(function(d) { return x(d.date); })
         .y(function(d) { return (!d.tagsscaled[currenttag]) ? y(0) : y(d.tagsscaled[currenttag]); });
     
     // Define mouseovers
+    var tooltip = d3.select("#sec_vis").append("div")	
+        .attr("class", "tooltip")				
+        .style("opacity", 0);
+    
     var onPathMouseOver = function (d) {
+        d3.select("svg").classed("highlighted", true);
         d3.select(this).classed("highlighted", true);
         d3.select(this.parentNode).select(".tagname").classed("highlighted", true);
+        tooltip.transition()		
+            .duration(200)		
+            .style("opacity", .9);
+        var visoffset = $(".visarea").offset();
+        var relX = d3.event.pageX - visoffset.left;
+        var relY = d3.event.pageY - visoffset.top;
+        var year = x.invert(relX).getFullYear();
+        var value = Math.max(0, Math.min(100, Math.round(y.invert(relY)))) + "%";
+        tooltip.html(d3.select(this).attr("tag") + "<br/>" + year + "<br/>" + value)
+            .style("left", (d3.event.pageX - 50) + "px")		
+            .style("top", (d3.event.pageY + 10) + "px");
     };
     var onPathMouseOut = function (d) {
+        d3.select("svg").classed("highlighted", false);
+        d3.selectAll(".highlightable").classed("shadowed", false);
         d3.select(this).classed("highlighted", false);
         d3.select(this.parentNode).select(".tagname").classed("highlighted", false);
+        tooltip.transition()		
+            .duration(300)		
+            .style("opacity", 0);	
     };
     var onLabelMouseOver = function (d) {
+        d3.select("svg").classed("highlighted", true);
         d3.select(this).classed("highlighted", true);
         d3.select(this.parentNode).select(".tagline").classed("highlighted", true);
     };
     var onLabelMouseOut = function (d) {
+        d3.select("svg").classed("highlighted", false);
         d3.select(this).classed("highlighted", false);
         d3.select(this.parentNode).select(".tagline").classed("highlighted", false);
     };
@@ -329,12 +352,13 @@ function buildTimelineVis() {
             yval = 0;
         var g = svg.append("g");
         g.append("path")	
-            .attr("class", "tagline")
+            .attr("class", "tagline highlightable")
             .attr("d", tagline(data))
+            .attr("tag", currenttag)
             .on("mouseover", onPathMouseOver)
             .on("mouseout", onPathMouseOut);
         g.append("text")
-            .attr("class", "tagname")
+            .attr("class", "tagname highlightable")
             .attr("transform", "translate(" + width + "," + y(yval) + ")")
             .attr("x", 3)
             .attr("dy", "0.35em")
@@ -345,18 +369,18 @@ function buildTimelineVis() {
     }
  
 	// Add the axes
+    var	xAxis = d3.svg.axis().scale(x)
+        .orient("bottom").ticks(years.length);
+    var	yAxis = d3.svg.axis().scale(y)
+        .orient("left").ticks(5);
 	svg.append("g")
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + height + ")")
 		.call(xAxis);
- 
-    // TODO show/explain what the y axis means
-    /*
 	svg.append("g")		
 		.attr("class", "y axis")
-        .attr("transform", "translate(" + width + ",0)")
+        .attr("transform", "translate(0,0)")
 		.call(yAxis);
-    */
 }
 
 function getMaxVisWidth() {
@@ -373,7 +397,7 @@ function getMaxVisHeight() {
     if (!height)
         height = 400;
     else
-        height -= 80;
+        height -= 100;
     
     if (height > 1000)
         height = 1000;
