@@ -7,6 +7,10 @@
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 
+var maxWeeklyArtistCount = 25;
+var maxWeeklyChartsToFetch = 52 * 15;
+var minWeeklyArtistPlayCount = 2;
+
 var tags = {};
 var tagsByArtist = {};
 var filteredTags = [];
@@ -19,10 +23,10 @@ function makeCloud(username, count, period) {
     fetchTopArtists(username, count, period, onArtistsDone);
 }
 
-function makeTimeline(username, count) {
+function makeTimeline(username) {
     filteredTags = [];
     var onChartsDone = function (data) {
-        fetchWeeklyArtistCharts(username, data.weeklychartlist, count);
+        fetchWeeklyArtistCharts(username, data.weeklychartlist);
     }
     fetchWeeklyCharts(username, onChartsDone);
 }
@@ -71,10 +75,9 @@ function fetchWeeklyCharts (username, callback) {
     );
 }
 
-function fetchWeeklyArtistCharts(username, charts, count) {
-    count = Math.min(count, 20);
+function fetchWeeklyArtistCharts(username, charts) {
     // TODO choose time bins depending on how much data the user has - years or months
-    var chartsToGet = Math.min(charts.chart.length, 52*15);
+    var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
     var chartsDone = 0;
     var artistsByYear = {};
     var onWeekDone = function (data) {
@@ -83,10 +86,10 @@ function fetchWeeklyArtistCharts(username, charts, count) {
         var year = new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear();
         if (!artistsByYear[year])
             artistsByYear[year] = [];
-        var maxArtists = Math.min(data.weeklyartistchart.artist.length, count);
+        var maxArtists = Math.min(data.weeklyartistchart.artist.length, maxWeeklyArtistCount);
         for (var j = 0; j < maxArtists; j++) {
             var artist = data.weeklyartistchart.artist[j];
-            if (artist.playcount < 2)
+            if (artist.playcount < minWeeklyArtistPlayCount)
                 continue;
             if (artistsByYear[year].indexOf(artist) < 0) {
                 artistsByYear[year].push(artist);
@@ -344,7 +347,7 @@ function buildTimelineVis() {
     var tagcounts = counts.counts;
     var tagcounttotal = counts.total;
     var sortedNames = getSortedTagNames(tagcounts);
-    for (var i = Math.min(sortedNames.length, 50) - 1; i >= 0; i--) {
+    for (var i = Math.min(sortedNames.length, 100) - 1; i >= 0; i--) {
         currenttag = sortedNames[i];
         var count = tagcounts[currenttag];
         var yval = data[data.length-1].tagsscaled[currenttag];

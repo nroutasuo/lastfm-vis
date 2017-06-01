@@ -46,7 +46,6 @@ function selectVis(evt, vis) {
         case vistypeTimeline:
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
             textHeader = "Tag Timeline";
-            showInputNumArtists = true;
             showInputTagFilters = true;
             break;
         
@@ -89,7 +88,7 @@ function startVis() {
     if (vistype === vistypeCloud)
         makeCloud(username, artistlimit, period);
     else if(vistype === vistypeTimeline)
-        makeTimeline(username, artistlimit);
+        makeTimeline(username);
     else if (vistype === vistypeAlbumChart)
         makeAlbumChart(username, artistlimit, period);
 }
@@ -132,7 +131,7 @@ function makeVisTitle() {
     var periodName = period.replace(/(\d)/g, "$1-").replace(/\b[a-z]/g,function(f) { return f.toUpperCase(); });
     switch (vistype) {
         case vistypeTimeline:
-            return "Tag Timeline (" + username +  " Weekly Top-" + artistlimit + ")";
+            return "Tag Timeline (" + username +  " Weekly Top-" + maxWeeklyArtistCount + ")";
         case vistypeCloud:
             return "Tag Cloud (" + username + " " + periodName + " Top-" + artistlimit + ")";
         case vistypeAlbumChart:
@@ -146,7 +145,7 @@ function getVisTypeDetails() {
     var tagscommon = "Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
     switch (vistype) {
         case vistypeTimeline:
-            return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period. The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
+            return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period (top " + maxWeeklyArtistCount + " artists with at least " + minWeeklyArtistPlayCount + " plays). The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
         case vistypeCloud:
             return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
         case vistypeAlbumChart:
