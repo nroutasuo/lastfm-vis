@@ -7,6 +7,7 @@
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 
+var maxPeriodArtistCount = 500;
 var maxWeeklyArtistCount = 25;
 var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 2;
@@ -32,14 +33,15 @@ function makeTimeline(username) {
 }
 
 function fetchTopArtists(username, count, period, callback) {
-    console.log("Fetching " + count + " top artists for " + username + "...");
+    count = Math.min(count, maxPeriodArtistCount);
+    console.log("Fetching " + count + " top " + period + " artists for " + username + "...");
     $.ajax({ 
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=user.gettopartists&' +
                'user=' + username + '&' +
                'limit=' + count + '&' +
-               'period' + period + '&' +
+               'period=' + period + '&' +
                'api_key=' + apiKey + '&' +
                'format=json',
         dataType: 'jsonp',

@@ -32,7 +32,7 @@ function makeAlbumChart(username, count, period) {
         data: 'method=user.gettopartists&' +
                'user=' + username + '&' +
                'limit=' + count + '&' +
-               'period' + period + '&' +
+               'period=' + period + '&' +
                'api_key=' + apiKey + '&' +
                'format=json',
         success: function (data) {
