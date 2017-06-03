@@ -128,7 +128,7 @@ function getSelections() {
 }
 
 function makeVisTitle() {
-    var periodName = period.replace(/(\d)/g, "$1-").replace(/\b[a-z]/g,function(f) { return f.toUpperCase(); });
+    var periodName = period.replace(/(\d+)/g, "$1-").replace(/\b[a-z]/g, function(f) { return f.toUpperCase(); });
     switch (vistype) {
         case vistypeTimeline:
             return "Tag Timeline (" + username +  " Weekly Top-" + maxWeeklyArtistCount + ")";
