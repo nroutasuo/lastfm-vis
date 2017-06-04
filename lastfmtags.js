@@ -12,6 +12,8 @@ var maxPeriodArtistCount = 500;
 var maxWeeklyArtistCount = 25;
 var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 2;
+var maxTagsInCloud = 50;
+var maxTimelineLines = 100;
 
 // keep between visualizations
 var tagsByArtist = {};
@@ -251,13 +253,12 @@ function buildCloudVis(artists) {
     var counts = getTagCounts(tagsByArtist, artists.topartists.artist);
     var tagcounts = counts.counts;
     var tagcounttotal = counts.total;
-    var sortedNames = getSortedTagNames(tagcounts);
+    var sortedNames = getSortedTagNames(tagcounts, maxTagsInCloud);
     
     clearVis();
     
     $("#sec_vis").append("<ul>");
-    var max = Math.min(sortedNames.length, 50);
-    for (var i = 0; i < max; i++) {
+    for (var i = 0; i < sortedNames.length; i++) {
         var tagname = sortedNames[i];
         var count = tagcounts[tagname];
         var tagsize = Math.round(count / tagcounttotal * 500);
@@ -266,7 +267,6 @@ function buildCloudVis(artists) {
         var li = $("<li class='tag " + tagclass + "'>" + tagname + "</li>");
         $("#sec_vis ul").append(li);
     }
-    console.log("Showing tags: " + max + "/" + sortedNames.length);
     stopLoading("Done.", "");
 }
 
@@ -356,9 +356,9 @@ function buildTimelineVis(artistsByYear) {
     var counts = getTagCounts(tags[lastyear], artistsByYear[lastyear]);
     var tagcounts = counts.counts;
     var tagcounttotal = counts.total;
-    var sortedNames = getSortedTagNames(tagcounts);
+    var sortedNames = getSortedTagNames(tagcounts, maxTimelineLines);
     
-    for (var i = Math.min(sortedNames.length, 100) - 1; i >= 0; i--) {
+    for (var i = sortedNames.length - 1; i >= 0; i--) {
         currenttag = sortedNames[i];
         var count = tagcounts[currenttag];
         var yval = data[data.length-1].tagsscaled[currenttag];
@@ -407,15 +407,12 @@ function GetTimelineData(artistsByYear) {
         d.year = year;
         d.date = year + "-1";
         var counts = getTagCounts(tags[year], artistsByYear[year]);
-        console.log(year);
-        console.log(counts);
         var tagcounts = counts.counts;
         var tagcounttotal = counts.total;
-        var sortedNames = getSortedTagNames(tagcounts);
-        var tagsmax = Math.min(sortedNames.length, 25);
+        var sortedNames = getSortedTagNames(tagcounts, 500);
         d.tags = {};
         d.maxcount = 0;
-        for (var j = 0; j < tagsmax; j++) {
+        for (var j = 0; j < sortedNames.length; j++) {
             var tagname = sortedNames[j];
             var count = tagcounts[tagname];
             d.tags[tagname] = count;
@@ -423,7 +420,7 @@ function GetTimelineData(artistsByYear) {
                 d.maxcount = count;
         }
         d.tagsscaled = {};
-        for (var j = 0; j < tagsmax; j++) {
+        for (var j = 0; j < sortedNames.length; j++) {
             var tagname = sortedNames[j];
             var count = tagcounts[tagname];
             d.tagsscaled[tagname] = Math.round(parseFloat(count) / d.maxcount * 100);
@@ -464,12 +461,12 @@ function getTagCounts(tagsByArtist, artists) {
     return { counts: tagcounts, total: tagcounttotal };
 }
 
-function getSortedTagNames(tagcounts) {
+function getSortedTagNames(tagcounts, maxTags) {
     var names = Object.keys(tagcounts);
     names.sort(function (a, b) {
         return tagcounts[b] - tagcounts[a];
     });
-    return names;
+    return names.slice(0, maxTags);
 }
 
 function cleanupTagName(name) {
