@@ -75,6 +75,7 @@ function selectVis(evt, vis) {
 
 function startVis() {
     clearVis();
+    showError("");
     var selectionsOK = getSelections();
     if (!selectionsOK)
         return;
@@ -99,7 +100,6 @@ function cancelVis() {
 }
 
 function clearVis() {
-	showError("");
     $("#sec_vis").children().remove();
 }
 
@@ -157,7 +157,8 @@ function getVisTypeDetails() {
 
 function stopLoading(info, error) {
     showInfo(info);
-    showError(error);
+    if (error)
+        showError(error);
     working = false;
 }
 
