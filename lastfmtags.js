@@ -7,19 +7,23 @@
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 
+// constants
 var maxPeriodArtistCount = 500;
 var maxWeeklyArtistCount = 25;
 var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 2;
 
-var tags = {};
+// keep between visualizations
 var tagsByArtist = {};
+
+// reset depending on selections
+var tags = {};
 var filteredTags = [];
 
 function makeCloud(username, count, period) {
     filteredTags = [];
     var onArtistsDone = function (data) {
-        fetchTags(data);
+        fetchTagsForCloud(data);
     }
     fetchTopArtists(username, count, period, onArtistsDone);
 }
@@ -132,27 +136,22 @@ function fetchWeeklyArtistChart(username, fromTimestamp, toTimestamp, callback) 
     );
 }
 
-function fetchTags(artists) {
-    tags = {};
+function fetchTagsForCloud(artists) {
     var totalartists = artists.topartists.artist.length;
     var artistsready = 0;
     
-    var onArtistOK = function (data) {
-        tags[data.toptags['@attr'].artist] = data;
-    };
-    
-    var onArtistReady = function () {
+    var onArtistReady = function (artist, data) {
         artistsready++;
         showLoaded(artistsready / totalartists * 100);
         if (artistsready == totalartists) {
-            buildCloudVis();
+            buildCloudVis(artists);
         }        
     };
     
     var artist;
-    for (var i = 0; i < artists.topartists.artist.length; i++) {
+    for (var i = 0; i < totalartists; i++) {
         artist = artists.topartists.artist[i];
-        fetchTagsForArtist(artist, onArtistOK, onArtistReady);
+        fetchTagsForArtist(artist, null, onArtistReady);
     }
 }
 
@@ -172,18 +171,18 @@ function fetchTagsForYear(year, artistsByYear) {
     
     tags[year] = {};
     
-    var onArtistOK = function (data) {
-        tags[year][data.toptags['@attr'].artist] = data;
+    var onArtistOK = function (artist, data) {
+        tags[year][getArtistID(artist)] = data;
     };
     
-    var onArtistReady = function () {
+    var onArtistReady = function (artist) {
         artistsready++;
         var yearPercentage = yearIndex / keys.length;
         yearPercentage += artistsready / totalartists / keys.length;
         showLoaded(50 + yearPercentage * 50);
         if (artistsready == totalartists) {
             if (yearIndex > 0) 
-                buildTimelineVis();
+                buildTimelineVis(artistsByYear);
                 
             if (yearIndex < keys.length - 1) {
                 fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
@@ -211,9 +210,14 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
         return;
     if (tagsByArtist[getArtistID(artist)]) {
         if (okCallback)
-            okCallback(tagsByArtist[getArtistID(artist)]);
-        responseCallback();
+            okCallback(artist, tagsByArtist[getArtistID(artist)]);
+        responseCallback(artist);
         return;
+    }
+    
+    var showCallError = function () {
+        console.log("Failed to fetch tags for " + artist.name + ".");
+        showError("Failed to fetch tags for " + artist.name + ".");
     }
     
     $.ajax({
@@ -229,24 +233,22 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
             if (data.toptags) {
                 tagsByArtist[getArtistID(artist)] = data;
                 if (okCallback)
-                    okCallback(data);
+                    okCallback(artist, data);
             } else {
-                console.log("Failed to fetch tags for " + artist.name);
-                console.log(artist.mbid);
+                showCallError();
             }
-            responseCallback();
+            responseCallback(artist);
         },
         error: function(code, message){
-            console.log("Failed to fetch tags for " + artist.name + ".");
-            showError("Failed to fetch tags for " + artist.name + ".");
-            responseCallback();
+            showCallError();
+            responseCallback(artist);
         }
     });
 }
 
-function buildCloudVis() {
+function buildCloudVis(artists) {
     console.log("Building vis...")
-    var counts = getTagCounts(tags);
+    var counts = getTagCounts(tagsByArtist, artists.topartists.artist);
     var tagcounts = counts.counts;
     var tagcounttotal = counts.total;
     var sortedNames = getSortedTagNames(tagcounts);
@@ -268,7 +270,7 @@ function buildCloudVis() {
     stopLoading("Done.", "");
 }
 
-function buildTimelineVis() {
+function buildTimelineVis(artistsByYear) {
     console.log("Building timeline..");
     clearVis();
     
@@ -278,7 +280,7 @@ function buildTimelineVis() {
         width = getMaxVisWidth() - margin.left - margin.right,
         height = getMaxVisHeight() - margin.top - margin.bottom;
     
-    // Adds the svg canvas
+    // Add the svg canvas
     var	svg = d3.select("#sec_vis")
         .append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -289,7 +291,7 @@ function buildTimelineVis() {
     
     // Set up data
     var years = Object.keys(tags);
-    var data = GetTimelineData();
+    var data = GetTimelineData(artistsByYear);
     var	parseDate = d3.time.format("%Y-%m").parse;
 	data.forEach(function(d) {
 		d.date = parseDate(d.date);
@@ -351,10 +353,11 @@ function buildTimelineVis() {
  
 	// Add the tags
     var lastyear = years[years.length -1];
-    var counts = getTagCounts(tags[lastyear]);
+    var counts = getTagCounts(tags[lastyear], artistsByYear[lastyear]);
     var tagcounts = counts.counts;
     var tagcounttotal = counts.total;
     var sortedNames = getSortedTagNames(tagcounts);
+    
     for (var i = Math.min(sortedNames.length, 100) - 1; i >= 0; i--) {
         currenttag = sortedNames[i];
         var count = tagcounts[currenttag];
@@ -417,7 +420,7 @@ function getMaxVisHeight() {
     return height;
 }
 
-function GetTimelineData() {
+function GetTimelineData(artistsByYear) {
     var data = [];
     var years = Object.keys(tags);
     var year;
@@ -426,7 +429,9 @@ function GetTimelineData() {
         var d = {};
         d.year = year;
         d.date = year + "-1";
-        var counts = getTagCounts(tags[year]);
+        var counts = getTagCounts(tags[year], artistsByYear[year]);
+        console.log(year);
+        console.log(counts);
         var tagcounts = counts.counts;
         var tagcounttotal = counts.total;
         var sortedNames = getSortedTagNames(tagcounts);
@@ -448,19 +453,24 @@ function GetTimelineData() {
         }
         data.push(d);
     }
+    console.log("timeline data:");
     console.log(data);
     return data;
 }
 
-function getTagCounts(tags) {
+function getTagCounts(tagsByArtist, artists) {
     var tagcounts = {};
     var tagcounttotal = 0;
     
+    var artist;
     var tag;
     var tagname;
-    for (var key in tags) {
-        for (var i = 0; i < tags[key].toptags.tag.length; i++) {
-            tag = tags[key].toptags.tag[i];
+    for (var i = 0; i < artists.length; i++) {
+        artist = getArtistID(artists[i]);
+        if (!tagsByArtist[artist])
+            continue;
+        for (var j = 0; j < tagsByArtist[artist].toptags.tag.length; j++) {
+            tag = tagsByArtist[artist].toptags.tag[j];
             tagname = cleanupTagName(tag.name);
             if (!filterTagName(tagname)) {
                 recordFilteredTag(tagname);
@@ -500,6 +510,8 @@ function filterTagName(name) {
     if (name === "seen live")
         return false;
     if (name === "favourites")
+        return false;
+    if (name === "awesome")
         return false;
     if (filterCountries && !filterTagNameCountries(name))
         return false;
