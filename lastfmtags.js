@@ -397,29 +397,6 @@ function buildTimelineVis(artistsByYear) {
 		.call(yAxis);
 }
 
-function getMaxVisWidth() {
-    var width = $("#sec_vis").width();
-    if (!width) 
-        width = 600;
-    else
-        width -= 80;
-    return width;
-}
-
-function getMaxVisHeight() {
-    var height = $(window).height();
-    if (!height)
-        height = 400;
-    else
-        height -= 100;
-    
-    if (height > 1000)
-        height = 1000;
-    if (height < 200)
-        height = 200;
-    return height;
-}
-
 function GetTimelineData(artistsByYear) {
     var data = [];
     var years = Object.keys(tags);
@@ -507,11 +484,7 @@ function recordFilteredTag(name) {
 }
 
 function filterTagName(name) {
-    if (name === "seen live")
-        return false;
-    if (name === "favourites")
-        return false;
-    if (name === "awesome")
+    if (nondescriptivetags.indexOf(name) >= 0)
         return false;
     if (filterCountries && !filterTagNameCountries(name))
         return false;
@@ -533,7 +506,10 @@ function filterTagNameDecades(name) {
     return true;
 }
 
-// TODO extend to user-specified filter
 var countrytags = [ 
-    "finnish", "swedish", "japanese", "american", "scandinavian", "suomi", "france", "brazilian", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british" 
+    "finnish", "swedish", "japanese", "american", "scandinavian", "suomi", "france", "brazilian", "brazil", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british", "africa", "afrika", "arabic", "asian", "polish", "russian", "canadian", "latin", "deutsch", "spanish", "korean", "english", "dutch", "icelandic"
 ];
+
+var nondescriptivetags = [
+    "seen live", "favourites", "favourite", "favourite songs", "good", "awesome", "love", "loved", "beautiful", "albums i own", "under 2000 listeners", "sexy", "live", "heard on pandora", "love at first listen", "spotify"
+]
