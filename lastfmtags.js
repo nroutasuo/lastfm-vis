@@ -209,8 +209,9 @@ function fetchTagsForYear(year, artistsByYear) {
 function fetchTagsForArtist(artist, okCallback, responseCallback) {
     if (!working)
         return;
-    if (tagsByArtist[artist.mbid]) {
-        okCallback(tagsByArtist[artist.mbid]);
+    if (tagsByArtist[getArtistID(artist)]) {
+        if (okCallback)
+            okCallback(tagsByArtist[getArtistID(artist)]);
         responseCallback();
         return;
     }
@@ -219,14 +220,19 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=artist.gettoptags&' +
-               'mbid=' + artist.mbid + '&' +
-               'api_key=' + apiKey + '&' +
-               'format=json',
+           'artist=' + artist.name + '&' + 
+           'mbid=' + artist.mbid + '&' +
+           'api_key=' + apiKey + '&' +
+           'format=json',
         dataType: 'jsonp',
         success: function(data) {
             if (data.toptags) {
-                tagsByArtist[artist.mbid] = data;
-                okCallback(data);
+                tagsByArtist[getArtistID(artist)] = data;
+                if (okCallback)
+                    okCallback(data);
+            } else {
+                console.log("Failed to fetch tags for " + artist.name);
+                console.log(artist.mbid);
             }
             responseCallback();
         },

@@ -102,7 +102,7 @@ function getArtistInfos (topartists, username) {
 			topartists.artist[0] = artist;
 		}
 		
-        var artist_id = getArtistID(artist.name);
+        var artist_id = getArtistNameID(artist.name);
         if(artist_infos[artist_id])
         {
             console.log("Using existing infos for artist " + artist.name + " (" + (i + 1) + ") (in progress: " + progress_artists + ")");
@@ -299,7 +299,7 @@ function displayAlbums(topalbums, artist) {
             var id = getAlbumID(name);
             var info = album_infos[id].album;
             var playcount = info.playcount;
-            var artist_total_playcount = artist_infos[getArtistID(artist)].stats.playcount;
+            var artist_total_playcount = artist_infos[getArtistNameID(artist)].stats.playcount;
             var w = 2 + (playcount / artist_total_playcount) * 50;
             return "width: " + w + "em";
         });
@@ -352,15 +352,11 @@ function getProgressPercentage() {
 }
 
 function getAlbumColID(artistname) {
-    return "albums-" + getArtistID(artistname);
+    return "albums-" + getArtistNameID(artistname);
 }
 
 function getAlbumID(albumname) {
     return "album-" + albumname.toLowerCase().replace(/ /g, "");
-}
-
-function getArtistID(artistname) {
-    return "artist-" + artistname.toLowerCase().replace(/[ &\.\/\']/g, "");
 }
 
 function getReleaseYear(albuminfo) {
@@ -488,23 +484,22 @@ function filterAlbumByDetailedInfo(albuminfo, allalbums, artist) {
     var album_tracks = albuminfo.tracks;
     
     var artist_playcount = artist.playcount; // artist plays by user
-    if (artist_infos[getArtistID(artist.name)]) {
-        var artist_total_playcount = artist_infos[getArtistID(artist.name)].stats.playcount;
+    if (artist_infos[getArtistNameID(artist.name)]) {
+        var artist_total_playcount = artist_infos[getArtistNameID(artist.name)].stats.playcount;
         if(album_playcount / artist_total_playcount < 0.0015) return "few relative playcount";
     } else {
-        console.log("no stats for artist " + artist.name + " " + getArtistID(artist.name));
+        console.log("no stats for artist " + artist.name + " " + getArtistNameID(artist.name));
     }
     
     return "";
 }
 
-function registerFiltered( reason, album, artistName ) {
-    if(album)
-    {
+function registerFiltered (reason, album, artistName) {
+    if (album) {
         if(!filtered_albums[reason])
             filtered_albums[reason] = [];
         
-        var artistID = getArtistID(artistName);
+        var artistID = getArtistNameID(artistName);
         if(!filtered_albums[reason][artistID])
             filtered_albums[reason][artistID] = [];
             
