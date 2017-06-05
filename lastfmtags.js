@@ -10,8 +10,9 @@ var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 // constants
 var maxPeriodArtistCount = 500;
 var maxWeeklyArtistCount = 25;
+var maxTimelineBinArtistCount = 250;
 var maxWeeklyChartsToFetch = 52 * 15;
-var minWeeklyArtistPlayCount = 2;
+var minWeeklyArtistPlayCount = 1;
 var maxTagsInCloud = 50;
 var maxTimelineLines = 100;
 
@@ -88,21 +89,35 @@ function fetchWeeklyArtistCharts(username, charts) {
     var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
     var chartsDone = 0;
     var artistsByYear = {};
+    var artistsByID = {};
+    
     var onWeekDone = function (data) {
         chartsDone++;
         showLoaded(chartsDone / chartsToGet * 50);
+        
         var year = new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear();
         if (!artistsByYear[year])
             artistsByYear[year] = [];
+        if (!artistsByID[year])
+            artistsByID[year] = {};
+        
         var maxArtists = Math.min(data.weeklyartistchart.artist.length, maxWeeklyArtistCount);
         for (var j = 0; j < maxArtists; j++) {
             var artist = data.weeklyartistchart.artist[j];
             if (artist.playcount < minWeeklyArtistPlayCount)
                 continue;
-            if (artistsByYear[year].indexOf(artist) < 0) {
+            
+            var artistID = getArtistID(artist);
+            var existingartist = artistsByID[year][artistID];
+            if (!existingartist) {
+                artistsByID[year][artistID] = artist;
                 artistsByYear[year].push(artist);
+                artist.totalplaycount = parseInt(artist.playcount);
+            } else {
+                existingartist.totalplaycount += parseInt(artist.playcount);
             }
         }
+        
         if (chartsDone == chartsToGet) {
             fetchTagsByYear(artistsByYear);
         }
@@ -163,8 +178,13 @@ function fetchTagsByYear(artistsByYear) {
 }
 
 function fetchTagsForYear(year, artistsByYear) {
-    var maxArtists = artistsByYear[year].length;
-    console.log("Fetching tags for " + maxArtists + " artists for the year " + year);
+    var artistlist = artistsByYear[year];
+    artistlist = artistlist.sort(function(a, b) {
+        return b.totalplaycount - a.totalplaycount;
+    });
+    
+    var maxArtists = Math.min(artistlist.length, maxTimelineBinArtistCount);
+    console.log("Fetching tags for " + maxArtists + " / " + artistlist.length + " artists for the year " + year);
     
     var keys = Object.keys(artistsByYear);
     var yearIndex = keys.indexOf(year);
@@ -197,7 +217,7 @@ function fetchTagsForYear(year, artistsByYear) {
 
     var artist;
     for (var i = 0; i < totalartists; i++) {
-        artist = artistsByYear[year][i];
+        artist = artistlist[i];
         fetchTagsForArtist(artist, onArtistOK, onArtistReady);
     }
     
