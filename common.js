@@ -61,16 +61,17 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
         showLoaded(chartsDone / chartsToGet * loadingProcessFactor);
         
         var year = parseInt(new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear());
-        if (!artistsByYear[year])
-            artistsByYear[year] = [];
-        if (!artistsByID[year])
-            artistsByID[year] = {};
         
         var maxArtists = Math.min(data.weeklyartistchart.artist.length, maxWeeklyArtists);
         for (var j = 0; j < maxArtists; j++) {
             var artist = data.weeklyartistchart.artist[j];
             if (artist.playcount < minWeeklyArtistPlayCount)
-                continue;
+                continue;            
+            
+            if (!artistsByYear[year])
+                artistsByYear[year] = [];
+            if (!artistsByID[year])
+                artistsByID[year] = {};
             
             var artistID = getArtistID(artist);
             var existingartist = artistsByID[year][artistID];
@@ -89,6 +90,7 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
                     return b.totalplaycount - a.totalplaycount;
                 });
             }
+            console.log(artistsByYear);
             doneCallback(artistsByYear);
         }
     };
