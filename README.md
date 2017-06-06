@@ -13,6 +13,10 @@ A timeline of tags based on a user's weekly charts.
 
 A classic tag cloud based on top artists.
 
-## Album CharterLittle
+## Artist Timeline
+
+A timeline of artists based on a user's weekly charts.
+
+## Album Charter
 
 Little app to find albums you might have overlooked by artists you already know. 

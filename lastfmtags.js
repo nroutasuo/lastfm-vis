@@ -5,16 +5,12 @@
 * Last.fm (https://www.last.fm/api)
 */
 
-var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
-
 // constants
+var maxWeeklyTagArtistCount = 25;
 var maxPeriodArtistCount = 500;
-var maxWeeklyArtistCount = 25;
 var maxTimelineBinArtistCount = 250;
-var maxWeeklyChartsToFetch = 52 * 15;
-var minWeeklyArtistPlayCount = 1;
 var maxTagsInCloud = 50;
-var maxTimelineLines = 100;
+var maxTagTimelineLines = 100;
 
 // keep between visualizations
 var tagsByArtist = {};
@@ -34,7 +30,7 @@ function makeTagCloud(username, count, period) {
 function makeTagTimeline(username) {
     filteredTags = [];
     var onChartsDone = function (data) {
-        fetchWeeklyArtistCharts(username, data.weeklychartlist);
+        fetchWeeklyArtistCharts(username, data.weeklychartlist, fetchTagsByYear, 50, maxWeeklyTagArtistCount);
     }
     fetchWeeklyCharts(username, onChartsDone);
 }
@@ -59,96 +55,6 @@ function fetchTopArtists(username, count, period, callback) {
         error: function(code, message){
             console.log("Failed to fetch top artists.");
             showError("Failed to fetch top artists");
-        }}
-    );
-}
-
-function fetchWeeklyCharts (username, callback) {
-    console.log("Fetching charts for " + username + "...");
-    $.ajax({ 
-        type: 'POST',
-        url: 'https://ws.audioscrobbler.com/2.0/',
-        data: 'method=user.getweeklychartlist&' +
-               'user=' + username + '&' +
-               'api_key=' + apiKey + '&' +
-               'format=json',
-        dataType: 'jsonp',
-        success: function(data) {
-            console.log("Charts fetched!");
-            callback(data);
-        },
-        error: function(code, message){
-            console.log("Failed to fetch charts.");
-            showError("Failed to fetch charts");
-        }}
-    );
-}
-
-function fetchWeeklyArtistCharts(username, charts) {
-    // TODO choose time bins depending on how much data the user has - years or months
-    var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
-    var chartsDone = 0;
-    var artistsByYear = {};
-    var artistsByID = {};
-    
-    var onWeekDone = function (data) {
-        chartsDone++;
-        showLoaded(chartsDone / chartsToGet * 50);
-        
-        var year = new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear();
-        if (!artistsByYear[year])
-            artistsByYear[year] = [];
-        if (!artistsByID[year])
-            artistsByID[year] = {};
-        
-        var maxArtists = Math.min(data.weeklyartistchart.artist.length, maxWeeklyArtistCount);
-        for (var j = 0; j < maxArtists; j++) {
-            var artist = data.weeklyartistchart.artist[j];
-            if (artist.playcount < minWeeklyArtistPlayCount)
-                continue;
-            
-            var artistID = getArtistID(artist);
-            var existingartist = artistsByID[year][artistID];
-            if (!existingartist) {
-                artistsByID[year][artistID] = artist;
-                artistsByYear[year].push(artist);
-                artist.totalplaycount = parseInt(artist.playcount);
-            } else {
-                existingartist.totalplaycount += parseInt(artist.playcount);
-            }
-        }
-        
-        if (chartsDone == chartsToGet) {
-            fetchTagsByYear(artistsByYear);
-        }
-    };
-    for (var i = 0; i < chartsToGet; i++) {
-        var chart = charts.chart[charts.chart.length - i - 1];
-        fetchWeeklyArtistChart(username, chart.from, chart.to, onWeekDone);
-    }
-}
-
-function fetchWeeklyArtistChart(username, fromTimestamp, toTimestamp, callback) {
-    $.ajax({
-        type: 'POST',
-        url: 'https://ws.audioscrobbler.com/2.0/',
-        data: 'method=user.getweeklyartistchart&' +
-               'user=' + username + '&' +
-               'from=' + fromTimestamp + '&' +
-               'to=' + toTimestamp + '&' +
-               'api_key=' + apiKey + '&' +
-               'format=json',
-        dataType: 'jsonp',
-        success: function(data) {
-            if (!data.weeklyartistchart) {
-                showError("Failed to fetch charts.");
-                return;
-            }
-            callback(data);
-        },
-        error: function(code, message){
-            console.log("Failed to fetch charts.");
-            showError("Failed to fetch charts");
         }}
     );
 }
@@ -178,6 +84,9 @@ function fetchTagsByYear(artistsByYear) {
 }
 
 function fetchTagsForYear(year, artistsByYear) {
+    if (!working)
+        return;
+    
     var artistlist = artistsByYear[year];
     artistlist = artistlist.sort(function(a, b) {
         return b.totalplaycount - a.totalplaycount;
@@ -205,7 +114,7 @@ function fetchTagsForYear(year, artistsByYear) {
         showLoaded(50 + yearPercentage * 50);
         if (artistsready == totalartists) {
             if (yearIndex > 0) 
-                buildTimelineVis(artistsByYear);
+                buildTagTimelineVis(artistsByYear);
                 
             if (yearIndex < keys.length - 1) {
                 fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
@@ -270,6 +179,9 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
 }
 
 function buildCloudVis(artists) {
+    if (!working)
+        return;
+    
     console.log("Building vis...")
     var counts = getTagCounts(tagsByArtist, artists.topartists.artist);
     var tagcounts = counts.counts;
@@ -291,24 +203,16 @@ function buildCloudVis(artists) {
     stopLoading("Done.", "");
 }
 
-function buildTimelineVis(artistsByYear) {
+function buildTagTimelineVis(artistsByYear) {
+    if (!working)
+        return;
+    
     console.log("Building timeline..");
     clearVis();
     
-    // Set the dimensions of the canvas / graph
-    // TODO limit width by number of data points on x, max ~300 px per point
-    var	margin = {top: 10, right: 150, bottom: 30, left: 25},
-        width = getMaxVisWidth() - margin.left - margin.right,
-        height = getMaxVisHeight() - margin.top - margin.bottom;
-    
-    // Add the svg canvas
-    var	svg = d3.select("#sec_vis")
-        .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-            .attr("class", "visarea")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var svg = setupSVG();
+    var height = getChartHeight();
+    var width = getChartWidth();
     
     // Set up data
     var years = Object.keys(tags);
@@ -316,7 +220,7 @@ function buildTimelineVis(artistsByYear) {
     var datas = GetTimelineData(artistsByYear);
     var dataByYear = datas.byYear;
     var dataByTag = datas.byTag;
-    var dataByTagFiltered = dataByTag.slice(0, maxTimelineLines);
+    var dataByTagFiltered = dataByTag.slice(0, maxTagTimelineLines);
     
     var	parseDate = d3.time.format("%Y-%m").parse;
      
@@ -326,53 +230,11 @@ function buildTimelineVis(artistsByYear) {
     var	y = d3.scale.linear().domain([0, 100]).range([height, 0]);
      
     // Define the line
-    var currenttag = null;
     var	tagline = d3.svg.line()
         .interpolate("cardinal")
         .tension(0.8)
         .x(function(d) { return x(parseDate(d.date)); })
         .y(function(d) { return y(d.relativecount) });
-    
-    // Define mouseovers
-    var tooltip = d3.select("#sec_vis").append("div")	
-        .attr("class", "tooltip")				
-        .style("opacity", 0);
-    
-    var onPathMouseOver = function (d) {
-        d3.select("svg").classed("highlighted", true);
-        d3.select(this).classed("highlighted", true);
-        d3.select(this.parentNode).select(".tagname").classed("highlighted", true);
-        tooltip.transition()		
-            .duration(200)		
-            .style("opacity", .9);
-        var visoffset = $(".visarea").offset();
-        var relX = d3.event.pageX - visoffset.left;
-        var relY = d3.event.pageY - visoffset.top;
-        var year = x.invert(relX).getFullYear();
-        var value = Math.max(0, Math.min(100, Math.round(y.invert(relY)))) + "%";
-        tooltip.html(d3.select(this).attr("tag") + "<br/>" + year + "<br/>" + value)
-            .style("left", (d3.event.pageX - 50) + "px")		
-            .style("top", (d3.event.pageY + 10) + "px");
-    };
-    var onPathMouseOut = function (d) {
-        d3.select("svg").classed("highlighted", false);
-        d3.selectAll(".highlightable").classed("shadowed", false);
-        d3.select(this).classed("highlighted", false);
-        d3.select(this.parentNode).select(".tagname").classed("highlighted", false);
-        tooltip.transition()		
-            .duration(300)		
-            .style("opacity", 0);	
-    };
-    var onLabelMouseOver = function (d) {
-        d3.select("svg").classed("highlighted", true);
-        d3.select(this).classed("highlighted", true);
-        d3.select(this.parentNode).select(".tagline").classed("highlighted", true);
-    };
-    var onLabelMouseOut = function (d) {
-        d3.select("svg").classed("highlighted", false);
-        d3.select(this).classed("highlighted", false);
-        d3.select(this.parentNode).select(".tagline").classed("highlighted", false);
-    };
  
     // Add the tags
     var tag = svg.selectAll(".tag")
@@ -385,8 +247,14 @@ function buildTimelineVis(artistsByYear) {
         .attr("class", "tagline highlightable")
         .attr("tag", function (d) { return d.name; })
         .attr("d", function(d) { return tagline(d.years); })
-        .on("mouseover", onPathMouseOver)
-        .on("mouseout", onPathMouseOut);
+        .on("mouseover", function (d) { 
+            onPathMouseOver(this, d);
+            showTooltip(x, y, d, "%");
+        })
+        .on("mouseout", function (d) { 
+            onPathMouseOut(this, d);
+            hideTooltip();
+        });
     
     tag.append("text")
         .attr("class", "tagname highlightable")
@@ -462,8 +330,8 @@ function GetTimelineData(artistsByYear) {
         }
         for (var j = 0; j < sortedNames.length; j++) {
             var tagname = sortedNames[j];
-            var count = tagcounts[tagname];
             var dt = getOrCreateTagItem(tagname);
+            var count = tagcounts[tagname];
             var relativecount = parseFloat(count) / dy.maxcount * 100;
             dt.years[i].relativecount = relativecount;
             dy.tagsscaled[tagname] = relativecount;

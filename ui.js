@@ -8,6 +8,7 @@
 var vistype;
 var vistypeCloud = "cloud-tag";
 var vistypeTimelineT = "timeline-tag";
+var vistypeTimelineA = "timeline-artist";
 var vistypeAlbumChart = "albums";
 
 var username = "";
@@ -68,6 +69,11 @@ function selectVis(evt, vis) {
             showInputArtistPeriod = true;
             showInputTagFilters = true;
             break;
+            
+        case vistypeTimelineA:
+            textVisIntro = "A timeline of artists based on a user's weekly charts.";
+            textHeader = "Artist timeline";
+            break;
         
         case vistypeAlbumChart:
             textVisIntro = "Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.";
@@ -102,6 +108,8 @@ function startVis() {
         makeTagCloud(username, artistlimit, period);
     else if(vistype === vistypeTimelineT)
         makeTagTimeline(username);
+    else if(vistype === vistypeTimelineA) {
+        makeArtistTimeline(username);
     } else if (vistype === vistypeAlbumChart)
         makeAlbumChart(username, artistlimit, period);
 }
@@ -143,9 +151,11 @@ function makeVisTitle() {
     var periodName = period.replace(/(\d+)/g, "$1-").replace(/\b[a-z]/g, function(f) { return f.toUpperCase(); });
     switch (vistype) {
         case vistypeTimelineT:
-            return "Tag Timeline (" + username +  " Weekly Top-" + maxWeeklyArtistCount + ")";
+            return "Tag Timeline (" + username +  " Weekly Top-" + maxWeeklyTagArtistCount + ")";
         case vistypeCloud:
             return "Tag Cloud (" + username + " " + periodName + " Top-" + artistlimit + ")";
+        case vistypeTimelineA:
+            return "Artist Timeline (" + username + " Top-" + maxArtistTimelineLines + ")";
         case vistypeAlbumChart:
             return "Album Charter (" + username + ")";
         default:
@@ -160,6 +170,8 @@ function getVisTypeDetails() {
             return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period (top " + maxWeeklyArtistCount + " artists with at least " + minWeeklyArtistPlayCount + " plays). The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
         case vistypeCloud:
             return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
+        case vistypeTimelineA:
+            return "Artist count per year is based on the number of plays on the user's weekly charts for all weeks that begin on the given year.";
         case vistypeAlbumChart:
             return "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
         default:

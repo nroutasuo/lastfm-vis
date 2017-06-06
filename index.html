@@ -14,8 +14,9 @@
 <script type="text/javascript" src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="ui.js"></script>
 <script type="text/javascript" src="common.js"></script>
-<script type="text/javascript" src="lastfmalbums.js"></script>
 <script type="text/javascript" src="lastfmtags.js"></script>
+<script type="text/javascript" src="lastfmartists.js"></script>
+<script type="text/javascript" src="lastfmalbums.js"></script>
 
 <header>
     <h1><span class="highlight">Last.fm</span> Tools</h1>
@@ -26,6 +27,7 @@
     <div class="tabbar">
         <button class="tabbutton" id="tab-btn-tagtimeline" onclick="selectVis(event, 'timeline-tag')">Tag Timeline</button>
         <button class="tabbutton" id="tab-btn-tagcloud" onclick="selectVis(event, 'cloud-tag')">Tag Cloud</button>
+        <button class="tabbutton" id="tab-btn-artisttimeline" onclick="selectVis(event, 'timeline-artist')">Artist Timeline</button>
         <button class="tabbutton" id="tab-btn-albumcharter" onclick="selectVis(event, 'albums')">Album Charter</button>
     </tabbar>
 </section>

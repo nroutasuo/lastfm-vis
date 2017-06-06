@@ -8,8 +8,6 @@
 var albumlimit = 50;
 var albumlimit_display = 25;
 
-var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
-
 var ok_artists;
 var progress_artists;
 var ok_albums;
