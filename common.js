@@ -60,7 +60,7 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
         chartsDone++;
         showLoaded(chartsDone / chartsToGet * loadingProcessFactor);
         
-        var year = new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear();
+        var year = parseInt(new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear());
         if (!artistsByYear[year])
             artistsByYear[year] = [];
         if (!artistsByID[year])
@@ -180,6 +180,13 @@ function setupSVG() {
         .attr("class", "tooltip")
         .attr("id", "tooltip")
         .style("opacity", 0);
+    
+    tooltip.append("span")
+        .attr("class", "tooltip-row tooltip-line");
+    tooltip.append("span")
+        .attr("class", "tooltip-row tooltip-x");
+    tooltip.append("span")
+        .attr("class", "tooltip-row tooltip-y");
             
     return svg;
 }
@@ -189,14 +196,21 @@ function showTooltip(x, y, d, valuesuffix) {
         .duration(200)		
         .style("opacity", .9);
     d3.select("#tooltip")
-        .style("left", (d3.event.pageX - 50) + "px")		
+        .style("left", (d3.event.pageX - 60) + "px")		
         .style("top", (d3.event.pageY + 10) + "px");
     var visoffset = $(".visarea").offset();
     var relX = d3.event.pageX - visoffset.left;
     var relY = d3.event.pageY - visoffset.top;
     var year = x.invert(relX).getFullYear();
-    var value = Math.max(0, Math.min(100, Math.round(y.invert(relY)))) + valuesuffix;
-    d3.select("#tooltip").html(d.name + "<br/>" + year + "<br/>" + value);
+    var yeari = -1;
+    for (var i = 0; i < d.years.length; i++) {
+        if (d.years[i].year == year)
+            yeari = i;
+    }
+    var value = yeari >= 0 ? d.years[yeari].value : "??";
+    d3.select("#tooltip .tooltip-line").html(d.name);
+    d3.select("#tooltip .tooltip-x").html(year);
+    d3.select("#tooltip .tooltip-y").html(Math.round(value) + valuesuffix);
 }
 
 function hideTooltip() {
@@ -230,6 +244,15 @@ function onLabelMouseOut(d) {
     d3.select(this.parentNode).select(".tagline").classed("highlighted", false);
 }
 
+function clearLinesOutsideGraph(width, height) {
+    d3.select(".visarea").append("rect")
+        .attr("x", 0)
+        .attr("y", height)
+        .attr("width", width)
+        .attr("height", 30)
+        .style("fill", "white");
+}
+
 function getChartWidth() {
     var margin = getChartMargin();
     return getMaxVisWidth() - margin.left - margin.right;
@@ -248,8 +271,6 @@ function getMaxVisWidth() {
     var width = $("#sec_vis").width();
     if (!width) 
         width = 600;
-    else
-        width -= 80;
     return width;
 }
 

@@ -235,7 +235,7 @@ function buildTagTimelineVis(artistsByYear) {
     // Define the line
     var	tagline = d3.svg.line()
         .interpolate("cardinal")
-        .tension(0.8)
+        .tension(0.9)
         .x(function(d) { return x(parseDate(d.date)); })
         .y(function(d) { return y(d.relativecount) });
  
@@ -262,16 +262,17 @@ function buildTagTimelineVis(artistsByYear) {
     tag.append("text")
         .attr("class", "tagname highlightable")
         .attr("transform", function (d) { return "translate(" + width + "," + y(d.years[d.years.length-1].relativecount) + ")"})
-        .attr("x", 3)
+        .attr("x", 4)
         .attr("dy", "0.35em")
         .style("font", "11px sans-serif")
         .text(function(d) { return d.name })
         .on("mouseover", onLabelMouseOver)
         .on("mouseout", onLabelMouseOut);
+        
+    clearLinesOutsideGraph();
  
 	// Add the axes
-    var	xAxis = d3.svg.axis().scale(x)
-        .orient("bottom").ticks(years.length);
+    var	xAxis = d3.svg.axis().scale(x);
     var	yAxis = d3.svg.axis().scale(y)
         .orient("left").ticks(5);
 	svg.append("g")
@@ -291,6 +292,10 @@ function GetTimelineData(artistsByYear) {
     
     var years = Object.keys(tags);
     
+    var makeDate = function(year) {
+        return year + "-01";
+    }
+    
     var getOrCreateTagItem = function (tagname) {
         if (!dataByTagMapped[tagname]) {
             var dt = {};
@@ -298,8 +303,8 @@ function GetTimelineData(artistsByYear) {
             dt.years = [];
             for (var i = 0; i < years.length; i++) {
                 dt.years[i] = {};
-                dt.years[i].year = years[i];
-                dt.years[i].date = years[i] + "-6";
+                dt.years[i].year = parseInt(years[i]);
+                dt.years[i].date = makeDate(years[i]);
                 dt.years[i].count = 0;
                 dt.years[i].relativecount = 0;
             }
@@ -313,8 +318,8 @@ function GetTimelineData(artistsByYear) {
     for (var i = 0; i < years.length; i++) {
         year = years[i];
         var dy = {};
-        dy.year = year;
-        dy.date = year + "-6";
+        dy.year = parseInt(year);
+        dy.date = makeDate(year);
         dy.tags = {};
         dy.tagsscaled = {};
         dy.maxcount = 0;
@@ -337,6 +342,7 @@ function GetTimelineData(artistsByYear) {
             var count = tagcounts[tagname];
             var relativecount = parseFloat(count) / dy.maxcount * 100;
             dt.years[i].relativecount = relativecount;
+            dt.years[i].value = relativecount;
             dy.tagsscaled[tagname] = relativecount;
         }
         dataByYear.push(dy);
@@ -427,7 +433,7 @@ function filterTagNameDecades(name) {
 }
 
 var countrytags = [ 
-    "finnish", "swedish", "japanese", "american", "scandinavian", "suomi", "france", "brazilian", "brazil", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british", "africa", "afrika", "arabic", "asian", "polish", "russian", "canadian", "latin", "deutsch", "spanish", "korean", "english", "dutch", "icelandic", "indian"
+    "finnish", "swedish", "japanese", "japan", "american", "scandinavian", "suomi", "france", "brazilian", "brazil", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british", "africa", "afrika", "arabic", "asian", "polish", "russian", "canadian", "latin", "deutsch", "spanish", "korean", "english", "dutch", "icelandic", "indian"
 ];
 
 var nondescriptivetags = [

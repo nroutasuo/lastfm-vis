@@ -233,14 +233,22 @@ div.album span.span-name {
 .tooltip {
     position: absolute;			
     text-align: center;			
-    width: 100px;					
-    height: 50px;					
+    width: 120px;
     padding: 2px;
     border: 1px solid #888;	
-    font-size: 80%;
+    font-size: 75%;
     background: #fff;
     border-radius: 5px;			
     pointer-events: none;		
+}
+
+.tooltip-row {
+    display: block;
+    height: 1.2em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    padding: 1px;
 }
 
 /* SVG */
