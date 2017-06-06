@@ -28,8 +28,11 @@ function makeTagCloud(username, count, period) {
 }
 
 function makeTagTimeline(username) {
+    tags = {};
     filteredTags = [];
     var onChartsDone = function (data) {
+        if (!working)
+            return;
         fetchWeeklyArtistCharts(username, data.weeklychartlist, fetchTagsByYear, 50, maxWeeklyTagArtistCount);
     }
     fetchWeeklyCharts(username, onChartsDone);

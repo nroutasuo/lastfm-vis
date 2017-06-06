@@ -10,6 +10,8 @@ var maxWeeklyArtistCount = 100;
 
 function makeArtistTimeline(username) {
     var onChartsDone = function (data) {
+        if (!working)
+            return;
         fetchWeeklyArtistCharts(username, data.weeklychartlist, buildArtistTimelineVis, 100, maxWeeklyArtistCount);
     }
     fetchWeeklyCharts(username, onChartsDone);

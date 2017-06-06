@@ -1,33 +1,51 @@
 
 // LAST.FM STUFF
 
-var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
+var apiKey = '3ef6e7e91fadb29f8653958588f47c23';
 
+// keep between visualizations
+var chartsByUser = {};
+
+// constants
 var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 1;
 
-function fetchWeeklyCharts (username, callback) {
-    console.log("Fetching charts for " + username + "...");
+function fetchWeeklyCharts(user, callback) {
+    console.log("Fetching weekly charts for " + user + "...");
+    if (chartsByUser[user])
+        callback(chartsByUser[user]);
+    
     $.ajax({ 
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=user.getweeklychartlist&' +
-               'user=' + username + '&' +
+               'user=' + user + '&' +
                'api_key=' + apiKey + '&' +
                'format=json',
         dataType: 'jsonp',
         success: function(data) {
-            console.log("Charts fetched!");
-            callback(data);
+            if (data.weeklychartlist) {
+                console.log("Weekly charts for " + user + " fetched! (" + data.weeklychartlist.chart.length + ")");
+                chartsByUser[user] = data;
+                callback(data);
+            } else {
+                working = false;
+                showError("Failed to fetch charts for " + user + ".");                
+            }
         },
         error: function(code, message){
-            console.log("Failed to fetch charts.");
-            showError("Failed to fetch charts");
+            working = false;
+            showError("Failed to fetch charts for " + user + ". " + message);
         }}
     );
 }
 
 function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessFactor, maxWeeklyArtists) {
+    if (!working)
+        return;
+    
+    console.log("Fetching weekly artists charts for " + username);
+    
     // TODO choose time bins depending on how much data the user has - years or months
     var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
     var chartsDone = 0;
@@ -35,6 +53,9 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
     var artistsByID = {};
     
     var onWeekDone = function (data) {
+        if (!working)
+            return;
+        
         chartsDone++;
         showLoaded(chartsDone / chartsToGet * loadingProcessFactor);
         
@@ -76,27 +97,35 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
     }
 }
 
-function fetchWeeklyArtistChart(username, fromTimestamp, toTimestamp, callback) {
+function fetchWeeklyArtistChart(name, fromTimestamp, toTimestamp, callback) {
+    if (!working || name != username)
+        return;
+    
     $.ajax({
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=user.getweeklyartistchart&' +
-               'user=' + username + '&' +
+               'user=' + name + '&' +
                'from=' + fromTimestamp + '&' +
                'to=' + toTimestamp + '&' +
                'api_key=' + apiKey + '&' +
                'format=json',
         dataType: 'jsonp',
         success: function(data) {
+            if (!working || name != username)
+                return;
             if (!data.weeklyartistchart) {
-                showError("Failed to fetch charts.");
+                working = false;
+                showError("Failed to fetch weekly chart for " + name + ". Check username.");
                 return;
             }
             callback(data);
         },
         error: function(code, message){
-            console.log("Failed to fetch charts.");
-            showError("Failed to fetch charts");
+            if (!working)
+                return;
+            working = false;
+            showError("Failed to fetch charts: " + message);
         }}
     );
 }
