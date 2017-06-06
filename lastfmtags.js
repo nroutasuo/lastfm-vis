@@ -16,7 +16,7 @@ var maxTagTimelineLines = 100;
 var tagsByArtist = {};
 
 // reset depending on selections
-var tags = {};
+var tagsPerYear = {};
 var filteredTags = [];
 
 function makeTagCloud(username, count, period) {
@@ -28,7 +28,7 @@ function makeTagCloud(username, count, period) {
 }
 
 function makeTagTimeline(username) {
-    tags = {};
+    tagsPerYear = {};
     filteredTags = [];
     var onChartsDone = function (data) {
         if (!working)
@@ -82,7 +82,7 @@ function fetchTagsForCloud(artists) {
 }
 
 function fetchTagsByYear(artistsByYear) {
-    tags = {};
+    tagsPerYear = {};
     fetchTagsForYear(Object.keys(artistsByYear)[0], artistsByYear);
 }
 
@@ -104,10 +104,10 @@ function fetchTagsForYear(year, artistsByYear) {
     var totalartists = maxArtists;
     var artistsready = 0;
     
-    tags[year] = {};
+    tagsPerYear[year] = {};
     
     var onArtistOK = function (artist, data) {
-        tags[year][getArtistID(artist)] = data;
+        tagsPerYear[year][getArtistID(artist)] = data;
     };
     
     var onArtistReady = function (artist) {
@@ -134,7 +134,7 @@ function fetchTagsForYear(year, artistsByYear) {
     }
     
     if (totalartists === 0) {
-        delete tags[year];
+        delete tagsPerYear[year];
         totalartists = 1;
         onArtistReady();
     }
@@ -218,9 +218,9 @@ function buildTagTimelineVis(artistsByYear) {
     var width = getChartWidth();
     
     // Set up data
-    var years = Object.keys(tags);
+    var years = Object.keys(tagsPerYear);
     var lastyear = years[years.length -1];
-    var datas = GetTimelineData(artistsByYear);
+    var datas = GetTimelineData(artistsByYear, tagsPerYear);
     var dataByYear = datas.byYear;
     var dataByTag = datas.byTag;
     var dataByTagFiltered = dataByTag.slice(0, maxTagTimelineLines);
@@ -285,12 +285,12 @@ function buildTagTimelineVis(artistsByYear) {
 		.call(yAxis);
 }
 
-function GetTimelineData(artistsByYear) {
+function GetTimelineData(artistsByYear, tagsPerYear) {
     var dataByTag = [];
     var dataByYear = [];
     var dataByTagMapped = {};
     
-    var years = Object.keys(tags);
+    var years = Object.keys(tagsPerYear);
     
     var makeDate = function(year) {
         return year + "-01";
@@ -323,7 +323,7 @@ function GetTimelineData(artistsByYear) {
         dy.tags = {};
         dy.tagsscaled = {};
         dy.maxcount = 0;
-        var counts = getTagCounts(tags[year], artistsByYear[year]);
+        var counts = getTagCounts(tagsPerYear[year], artistsByYear[year]);
         var tagcounts = counts.counts;
         var tagcounttotal = counts.total;
         var sortedNames = getSortedTagNames(tagcounts, 500);
@@ -383,8 +383,9 @@ function getTagCounts(tagsByArtist, artists) {
             if (!tagcounts[tagname]) {
                 tagcounts[tagname] = 0;
             }
-            tagcounts[tagname] += parseInt(tag.count);
-            tagcounttotal += parseInt(tag.count);
+            var artistweight = artists[i].totalplaycount ? artists[i].totalplaycount : artists[i].playcount;
+            tagcounts[tagname] += parseInt(tag.count) * artistweight;
+            tagcounttotal += parseInt(tag.count) * artistweight;
         }
     }
     return { counts: tagcounts, total: tagcounttotal };
