@@ -23,7 +23,7 @@ var tagsByArtist = {};
 var tags = {};
 var filteredTags = [];
 
-function makeCloud(username, count, period) {
+function makeTagCloud(username, count, period) {
     filteredTags = [];
     var onArtistsDone = function (data) {
         fetchTagsForCloud(data);
@@ -31,7 +31,7 @@ function makeCloud(username, count, period) {
     fetchTopArtists(username, count, period, onArtistsDone);
 }
 
-function makeTimeline(username) {
+function makeTagTimeline(username) {
     filteredTags = [];
     var onChartsDone = function (data) {
         fetchWeeklyArtistCharts(username, data.weeklychartlist);

@@ -24,9 +24,9 @@
 
 <section id="sec_tabs">
     <div class="tabbar">
-        <button class="tabbutton" onclick="selectVis(event, 'timeline')">Tag Timeline</button>
-        <button class="tabbutton" onclick="selectVis(event, 'cloud')">Tag Cloud</button>
-        <button class="tabbutton" onclick="selectVis(event, 'albums')">Album Charter</button>
+        <button class="tabbutton" id="tab-btn-tagtimeline" onclick="selectVis(event, 'timeline-tag')">Tag Timeline</button>
+        <button class="tabbutton" id="tab-btn-tagcloud" onclick="selectVis(event, 'cloud-tag')">Tag Cloud</button>
+        <button class="tabbutton" id="tab-btn-albumcharter" onclick="selectVis(event, 'albums')">Album Charter</button>
     </tabbar>
 </section>
 
@@ -38,11 +38,11 @@
         <label>Your <a href="http://www.last.fm/">Last.fm</a> username:</label>
         <input type="text" placeholder="" id="username">
     </span>
-    <span id="input_numartists" class="inputcontainer">
+    <span id="input_numartists" class="inputcontainer" style="display:none">
         <label>Number of artists:</label>
         <input type="number" placeholder="" id="artistcount" min="1" max="100" value="50">
     </span>
-    <span id="input_artistperiod" class="inputcontainer">
+    <span id="input_artistperiod" class="inputcontainer" style="display:none">
         <label>Period:</label>
         <select id="artistperiod">
             <option value="overall">All</option>
@@ -53,7 +53,7 @@
             <option value="12month">12 Months</option>
         </select>
     </span>
-    <span id="input_tagfilters" class="inputcontainer">
+    <span id="input_tagfilters" class="inputcontainer" style="display:none">
         <span>
             <label><input type="checkbox" id="filter-countries" value="countries">
             Filter countries</label>

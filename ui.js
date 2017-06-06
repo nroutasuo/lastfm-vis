@@ -6,8 +6,8 @@
 */
 
 var vistype;
-var vistypeCloud = "cloud";
-var vistypeTimeline = "timeline";
+var vistypeCloud = "cloud-tag";
+var vistypeTimelineT = "timeline-tag";
 var vistypeAlbumChart = "albums";
 
 var username = "";
@@ -23,7 +23,17 @@ $(document).ready(function () {
     window.setInterval(blink, 500);
     
     // set initial tab
-    $("#sec_tabs .tabbutton")[0].click();
+    var tabSelected = false;
+    if (window.location.hash) {
+        var selectedtabname = window.location.hash.replace("#", "");
+        var tabbtnid = "#tab-btn-" + selectedtabname;
+        if($(tabbtnid)) {
+            $(tabbtnid).click();
+            tabSelected = true;
+        }
+    }
+    if (!tabSelected)
+        $("#sec_tabs .tabbutton")[0].click();
     
     // enable starting visualization with enter key
     enableKeyboardStart($("#username"));
@@ -34,6 +44,8 @@ function selectVis(evt, vis) {
     var tablinks = $(".tabbutton").removeClass("active");
     evt.target.className += " active";
 
+    window.location.hash = "#" + evt.target.id.replace("tab-btn-", "");
+    
     vistype = vis;
     
     var textVisIntro = "";
@@ -43,7 +55,7 @@ function selectVis(evt, vis) {
     var showInputTagFilters = false;
     switch (vis) {
         
-        case vistypeTimeline:
+        case vistypeTimelineT:
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
             textHeader = "Tag Timeline";
             showInputTagFilters = true;
@@ -87,10 +99,10 @@ function startVis() {
     showVisDetails("");
     
     if (vistype === vistypeCloud)
-        makeCloud(username, artistlimit, period);
-    else if(vistype === vistypeTimeline)
-        makeTimeline(username);
-    else if (vistype === vistypeAlbumChart)
+        makeTagCloud(username, artistlimit, period);
+    else if(vistype === vistypeTimelineT)
+        makeTagTimeline(username);
+    } else if (vistype === vistypeAlbumChart)
         makeAlbumChart(username, artistlimit, period);
 }
 
@@ -130,7 +142,7 @@ function getSelections() {
 function makeVisTitle() {
     var periodName = period.replace(/(\d+)/g, "$1-").replace(/\b[a-z]/g, function(f) { return f.toUpperCase(); });
     switch (vistype) {
-        case vistypeTimeline:
+        case vistypeTimelineT:
             return "Tag Timeline (" + username +  " Weekly Top-" + maxWeeklyArtistCount + ")";
         case vistypeCloud:
             return "Tag Cloud (" + username + " " + periodName + " Top-" + artistlimit + ")";
@@ -144,12 +156,12 @@ function makeVisTitle() {
 function getVisTypeDetails() {
     var tagscommon = "Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
     switch (vistype) {
-        case vistypeTimeline:
+        case vistypeTimelineT:
             return "Tag count is based on the number of times it's listed on artists on the user's weekly charts on the given time period (top " + maxWeeklyArtistCount + " artists with at least " + minWeeklyArtistPlayCount + " plays). The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
         case vistypeCloud:
             return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
         case vistypeAlbumChart:
-            textVisDetails = "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
+            return "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
         default:
             return "";
     }
@@ -213,7 +225,7 @@ function enableKeyboardStart(input) {
     $(input).keypress(function(e) {
         var code = e.keyCode || e.which;
         if (code === 13) {
-            fetchData();
+            startVis();
         }
     });
 }
