@@ -159,7 +159,7 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=artist.gettoptags&' +
-           'artist=' + artist.name + '&' + 
+           'artist=' + encodeURIComponent(artist.name) + '&' + 
            'mbid=' + artist.mbid + '&' +
            'api_key=' + apiKey + '&' +
            'format=json',
