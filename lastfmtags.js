@@ -339,7 +339,7 @@ function GetTimelineData(artistsByYear) {
         dataByYear.push(dy);
     }
     
-    var lastyear = years[years.length -1];
+    var lastyear = years.length -1;
     dataByTag = dataByTag.sort(function (a,b) {
         var valA = a[lastyear] ? a[lastyear].count : 0;
         var valB = b[lastyear] ? b[lastyear].count : 0;

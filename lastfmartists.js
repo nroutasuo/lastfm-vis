@@ -146,10 +146,10 @@ function GetArtistTimelineData(artistsByYear) {
         dataByYear.push(dy);
     }
     
-    var lastyear = years[years.length -1];
+    var lastyear = years.length -1;
     dataByArtist = dataByArtist.sort(function (a,b) {
-        var valA = a[lastyear] ? a[lastyear].count : 0;
-        var valB = b[lastyear] ? b[lastyear].count : 0;
+        var valA = a.years[lastyear] ? a.years[lastyear].count : 0;
+        var valB = b.years[lastyear] ? b.years[lastyear].count : 0;
         return valB - valA;
     });
     
