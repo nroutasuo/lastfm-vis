@@ -3,7 +3,7 @@
 
 var apiKey = '7368f1aa0cd2d8defcba395eb5e9fd63';
 
-var maxWeeklyChartsToFetch = 52*10; //52 * 15;
+var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 1;
 
 function fetchWeeklyCharts (username, callback) {
