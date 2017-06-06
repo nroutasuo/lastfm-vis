@@ -5,6 +5,7 @@ var apiKey = '3ef6e7e91fadb29f8653958588f47c23';
 
 // keep between visualizations
 var chartsByUser = {};
+var artistChartsByUser = {};
 
 // constants
 var maxWeeklyChartsToFetch = 52 * 15;
@@ -101,6 +102,15 @@ function fetchWeeklyArtistChart(name, fromTimestamp, toTimestamp, callback) {
     if (!working || name != username)
         return;
     
+    if (!artistChartsByUser[name])
+        artistChartsByUser[name] = {};
+
+    var cachekey = fromTimestamp + "-" + toTimestamp;
+    if (artistChartsByUser[name][cachekey]) {
+        callback(artistChartsByUser[name][cachekey]);
+        return;
+    }
+    
     $.ajax({
         type: 'POST',
         url: 'https://ws.audioscrobbler.com/2.0/',
@@ -119,6 +129,7 @@ function fetchWeeklyArtistChart(name, fromTimestamp, toTimestamp, callback) {
                 showError("Failed to fetch weekly chart for " + name + ". Check username.");
                 return;
             }
+            artistChartsByUser[name][cachekey] = data;
             callback(data);
         },
         error: function(code, message){
