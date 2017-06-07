@@ -318,6 +318,7 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
             dt.years = [];
             for (var i = 0; i < years.length; i++) {
                 dt.years[i] = {};
+                dt.years[i].name = tagname;
                 dt.years[i].year = parseInt(years[i]);
                 dt.years[i].date = makeDate(years[i]);
                 dt.years[i].count = 0;
@@ -449,7 +450,7 @@ function filterTagNameDecades(name) {
 }
 
 var countrytags = [ 
-    "finnish", "swedish", "japanese", "japan", "american", "scandinavian", "suomi", "france", "brazilian", "brazil", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british", "africa", "afrika", "arabic", "asian", "polish", "russian", "canadian", "latin", "deutsch", "spanish", "korean", "english", "dutch", "icelandic", "indian"
+    "finnish", "finland", "swedish", "japanese", "japan", "american", "scandinavian", "suomi", "france", "brazilian", "brazil", "irish", "german", "uk", "brasil", "usa", "french", "australian", "italian", "norwegian", "norway", "sweden", "british", "africa", "afrika", "arabic", "asian", "polish", "russian", "canadian", "latin", "deutsch", "spanish", "korean", "english", "dutch", "icelandic", "indian"
 ];
 
 var nondescriptivetags = [
