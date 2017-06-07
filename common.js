@@ -204,12 +204,19 @@ function showTooltip(x, y, d, valuesuffix) {
     var relX = d3.event.pageX - visoffset.left;
     var relY = d3.event.pageY - visoffset.top;
     var year = x.invert(relX).getFullYear();
-    var yeari = -1;
-    for (var i = 0; i < d.years.length; i++) {
-        if (d.years[i].year == year)
-            yeari = i;
+    
+    var value = "??";
+    if (d.years) {
+        var yeari = -1;
+        for (var i = 0; i < d.years.length; i++) {
+            if (d.years[i].year == year)
+                yeari = i;
+        }
+        value = yeari >= 0 ? d.years[yeari].value : "??";
+    } else {
+        value = d.value;
     }
-    var value = yeari >= 0 ? d.years[yeari].value : "??";
+    
     d3.select("#tooltip .tooltip-line").html(d.name);
     d3.select("#tooltip .tooltip-x").html(year);
     d3.select("#tooltip .tooltip-y").html(Math.round(value) + valuesuffix);
@@ -225,6 +232,8 @@ function onPathMouseOver(elem, d) {
     d3.select("svg").classed("highlighted", true);
     d3.select(elem).classed("highlighted", true);
     d3.select(elem.parentNode).select(".tagname").classed("highlighted", true);
+    d3.select(elem.parentNode).select(".tagline").classed("highlighted", true);
+    d3.select(elem.parentNode).selectAll(".dot").classed("highlighted", true);
 };
 
 function onPathMouseOut(elem, d) {
@@ -232,18 +241,22 @@ function onPathMouseOut(elem, d) {
     d3.selectAll(".highlightable").classed("shadowed", false);
     d3.select(elem).classed("highlighted", false);
     d3.select(elem.parentNode).select(".tagname").classed("highlighted", false);
+    d3.select(elem.parentNode).select(".tagline").classed("highlighted", false);
+    d3.select(elem.parentNode).selectAll(".dot").classed("highlighted", false);
 }
 
 function onLabelMouseOver(d) {
     d3.select("svg").classed("highlighted", true);
     d3.select(this).classed("highlighted", true);
     d3.select(this.parentNode).select(".tagline").classed("highlighted", true);
+    d3.select(this.parentNode).selectAll(".dot").classed("highlighted", true);
 }
 
 function onLabelMouseOut(d) {
     d3.select("svg").classed("highlighted", false);
     d3.select(this).classed("highlighted", false);
     d3.select(this.parentNode).select(".tagline").classed("highlighted", false);
+    d3.select(this.parentNode).selectAll(".dot").classed("highlighted", false);
 }
 
 function clearLinesOutsideGraph(width, height) {

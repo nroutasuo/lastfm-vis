@@ -327,6 +327,7 @@ path {
 .tagline {
     fill: none;
     stroke: #999;
+    stroke-width: 1.5px;
 }
 
 .tagline.highlighted {
@@ -334,12 +335,23 @@ path {
     stroke-width: 2px;
 }
 
-.tagname {
+.tagname, .dot {
     fill: #999;
 }
 
-.tagname.highlighted {
+.dot {
+    r: 2.5px;
+    opacity: 0;
+    fill-opacity: 0;
+}
+
+.tagname.highlighted, .dot.highlighted {
     fill: black;
+}
+
+.dot.highlighted {
+    opacity: 1;
+    fill-opacity: 1;
 }
 
 svg.highlighted .highlightable {

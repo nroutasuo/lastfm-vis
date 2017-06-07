@@ -258,6 +258,23 @@ function buildTagTimelineVis(artistsByYear) {
             onPathMouseOut(this, d);
             hideTooltip();
         });
+        
+    clearLinesOutsideGraph();
+    
+    tag.selectAll(".dot")
+        .data(function (d) { return d.years })
+        .enter().append("circle")
+        .attr("class", "dot highlightable")
+        .attr("cx", function (d) { return x(parseDate(d.date)); } )
+        .attr("cy", function (d) { return y(d.relativecount); } )
+        .on("mouseover", function (d) { 
+            onPathMouseOver(this, d);
+            showTooltip(x, y, d, "%");
+        })
+        .on("mouseout", function (d) { 
+            onPathMouseOut(this, d);
+            hideTooltip();
+        });
     
     tag.append("text")
         .attr("class", "tagname highlightable")
@@ -268,8 +285,6 @@ function buildTagTimelineVis(artistsByYear) {
         .text(function(d) { return d.name })
         .on("mouseover", onLabelMouseOver)
         .on("mouseout", onLabelMouseOut);
-        
-    clearLinesOutsideGraph();
  
 	// Add the axes
     var	xAxis = d3.svg.axis().scale(x);

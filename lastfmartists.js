@@ -71,7 +71,24 @@ function buildArtistTimelineVis(artistsByYear) {
             onPathMouseOut(this, d);
             hideTooltip();
         });
+        
+    clearLinesOutsideGraph(width, height);
     
+    artist.selectAll(".dot")
+        .data(function (d) { return d.years })
+        .enter().append("circle")
+        .attr("class", "dot highlightable")
+        .attr("cx", function (d) { return x(parseDate(d.date)); } )
+        .attr("cy", function (d) { return y(d.count); } )
+        .on("mouseover", function (d) { 
+            onPathMouseOver(this, d);
+            showTooltip(x, y, d, " plays");
+        })
+        .on("mouseout", function (d) { 
+            onPathMouseOut(this, d);
+            hideTooltip();
+        });
+      
     artist.append("text")
         .attr("class", "tagname highlightable")
         .attr("transform", function (d) { return "translate(" + width + "," + y(d.years[d.years.length-1].count) + ")"})
@@ -81,8 +98,6 @@ function buildArtistTimelineVis(artistsByYear) {
         .text(function(d) { return d.name })
         .on("mouseover", onLabelMouseOver)
         .on("mouseout", onLabelMouseOut);
-        
-    clearLinesOutsideGraph(width, height);
  
 	// Add the axes
     var	xAxis = d3.svg.axis().scale(x);
@@ -125,6 +140,7 @@ function GetArtistTimelineData(artistsByYear) {
                 dt.years[i].year = parseInt(years[i]);
                 dt.years[i].date = makeDate(years[i]);
                 dt.years[i].count = 0;
+                dt.years[i].name = dt.name;
             }
             dataByArtistMapped[artistID] = dt;
             dataByArtist.push(dt);
