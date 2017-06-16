@@ -240,6 +240,14 @@ function buildTagTimelineVis(artistsByYear) {
         .y(function(d) { return y(d.relativecount) });
  
     // Add the tags
+    var getArtistsString = function (d) {
+        var result = "";
+        for (var i = 0; i < Math.min(d.artists.length, 3); i++) {
+            result += (i + 1) + ") " + d.artists[i].name + " (" + d.artists[i].totalplaycount + " plays)<br/>";
+        }
+        return result;
+    };
+    
     var tag = svg.selectAll(".tag")
         .data(dataByTagFiltered)
         .enter().append("g")
@@ -250,9 +258,11 @@ function buildTagTimelineVis(artistsByYear) {
         .attr("class", "tagline highlightable")
         .attr("tag", function (d) { return d.name; })
         .attr("d", function(d) { return tagline(d.years); })
-        .on("mouseover", function (d) { 
+        .on("mouseover", function (d) {
+            var year = getInputEventYear(x);
+            var yeari = getYearIndex(d.years, year);
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, "%");
+            showTooltip(x, y, d, "%", getArtistsString(d.years[yeari]));
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -267,9 +277,9 @@ function buildTagTimelineVis(artistsByYear) {
         .attr("class", "dot highlightable")
         .attr("cx", function (d) { return x(parseDate(d.date)); } )
         .attr("cy", function (d) { return y(d.relativecount); } )
-        .on("mouseover", function (d) { 
+        .on("mouseover", function (d) {
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, "%");
+            showTooltip(x, y, d, "%", getArtistsString(d));
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -323,6 +333,7 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
                 dt.years[i].date = makeDate(years[i]);
                 dt.years[i].count = 0;
                 dt.years[i].relativecount = 0;
+                dt.years[i].artists = [];
             }
             dataByTagMapped[tagname] = dt;
             dataByTag.push(dt);
@@ -341,6 +352,7 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
         dy.maxcount = 0;
         var counts = getTagCounts(tagsPerYear[year], artistsByYear[year]);
         var tagcounts = counts.counts;
+        var artistsByTag = counts.artists;
         var tagcounttotal = counts.total;
         var sortedNames = getSortedTagNames(tagcounts, 500);
         for (var j = 0; j < sortedNames.length; j++) {
@@ -348,6 +360,9 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
             var dt = getOrCreateTagItem(tagname);
             var count = tagcounts[tagname];
             dt.years[i].count = count;
+            dt.years[i].artists = artistsByTag[tagname].sort(function (a, b) {
+                return b.weight - a.weight;
+            });
             dy.tags[tagname] = count;
             if (count > dy.maxcount)
                 dy.maxcount = count;
@@ -379,17 +394,20 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
 
 function getTagCounts(tagsByArtist, artists) {
     var tagcounts = {};
+    var artistsByTag = {};
     var tagcounttotal = 0;
     
-    var artist;
+    var artistID;
     var tag;
     var tagname;
+    var artisttaglist;
     for (var i = 0; i < artists.length; i++) {
-        artist = getArtistID(artists[i]);
-        if (!tagsByArtist[artist])
+        artistID = getArtistID(artists[i]);
+        if (!tagsByArtist[artistID])
             continue;
-        for (var j = 0; j < tagsByArtist[artist].toptags.tag.length; j++) {
-            tag = tagsByArtist[artist].toptags.tag[j];
+        artisttaglist = tagsByArtist[artistID].toptags.tag;
+        for (var j = 0; j < artisttaglist.length; j++) {
+            tag = artisttaglist[j];
             tagname = cleanupTagName(tag.name);
             if (!filterTagName(tagname)) {
                 recordFilteredTag(tagname);
@@ -399,12 +417,25 @@ function getTagCounts(tagsByArtist, artists) {
             if (!tagcounts[tagname]) {
                 tagcounts[tagname] = 0;
             }
-            var artistweight = artists[i].totalplaycount ? artists[i].totalplaycount : artists[i].playcount;
-            tagcounts[tagname] += parseInt(tag.count) * artistweight;
-            tagcounttotal += parseInt(tag.count) * artistweight;
+            var playcount = artists[i].totalplaycount ? artists[i].totalplaycount : artists[i].playcount;
+            var tagcount = parseInt(tag.count);
+            var artistweight = playcount * tagcount;
+            tagcounts[tagname] += artistweight;
+            tagcounttotal += artistweight;
+            
+            if (!artistsByTag[tagname])
+                artistsByTag[tagname] = [];
+            if (artistsByTag[tagname].indexOf(artists[i].name) < 0)
+                artistsByTag[tagname].push({
+                name: artists[i].name,
+                totalplaycount: artists[i].totalplaycount,
+                tagcount: tag.count,
+                weight: artistweight,
+            });
         }
     }
-    return { counts: tagcounts, total: tagcounttotal };
+    
+    return { counts: tagcounts, artists: artistsByTag, total: tagcounttotal };
 }
 
 function getSortedTagNames(tagcounts, maxTags) {

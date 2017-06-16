@@ -65,7 +65,7 @@ function buildArtistTimelineVis(artistsByYear) {
         .attr("d", function(d) { return artistline(d.years); })
         .on("mouseover", function (d) { 
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, " plays");
+            showTooltip(x, y, d, " plays", "");
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -82,7 +82,7 @@ function buildArtistTimelineVis(artistsByYear) {
         .attr("cy", function (d) { return y(d.count); } )
         .on("mouseover", function (d) { 
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, " plays");
+            showTooltip(x, y, d, " plays", "");
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);

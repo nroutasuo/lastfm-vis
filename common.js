@@ -189,29 +189,25 @@ function setupSVG() {
         .attr("class", "tooltip-row tooltip-x");
     tooltip.append("span")
         .attr("class", "tooltip-row tooltip-y");
+    tooltip.append("span")
+        .attr("class", "tooltip-row tooltip-details");
             
     return svg;
 }
 
-function showTooltip(x, y, d, valuesuffix) {
+function showTooltip(x, y, d, valuesuffix, details) {
     d3.select("#tooltip").transition()		
         .duration(200)		
         .style("opacity", .9);
     d3.select("#tooltip")
         .style("left", (d3.event.pageX - 60) + "px")		
         .style("top", (d3.event.pageY + 10) + "px");
-    var visoffset = $(".visarea").offset();
-    var relX = d3.event.pageX - visoffset.left;
-    var relY = d3.event.pageY - visoffset.top;
-    var year = x.invert(relX).getFullYear();
+        
+    var year = getInputEventYear(x);
     
     var value = "??";
     if (d.years) {
-        var yeari = -1;
-        for (var i = 0; i < d.years.length; i++) {
-            if (d.years[i].year == year)
-                yeari = i;
-        }
+        var yeari = getYearIndex(d.years, year);
         value = yeari >= 0 ? d.years[yeari].value : "??";
     } else {
         value = d.value;
@@ -220,6 +216,8 @@ function showTooltip(x, y, d, valuesuffix) {
     d3.select("#tooltip .tooltip-line").html(d.name);
     d3.select("#tooltip .tooltip-x").html(year);
     d3.select("#tooltip .tooltip-y").html(Math.round(value) + valuesuffix);
+    d3.select("#tooltip .tooltip-details").html(details ? details : "");
+    d3.select("#tooltip .tooltip-details").style("display", details ? "block" : "none");
 }
 
 function hideTooltip() {
@@ -257,6 +255,22 @@ function onLabelMouseOut(d) {
     d3.select(this).classed("highlighted", false);
     d3.select(this.parentNode).select(".tagline").classed("highlighted", false);
     d3.select(this.parentNode).selectAll(".dot").classed("highlighted", false);
+}
+
+function getInputEventYear(x) {
+    var visoffset = $(".visarea").offset();
+    var relX = d3.event.pageX - visoffset.left;
+    var year = x.invert(relX).getFullYear();
+    return year;
+}
+
+function getYearIndex(years, year) {
+    var yeari = -1;
+    for (var i = 0; i < years.length; i++) {
+        if (years[i].year == year)
+            yeari = i;
+    }
+    return yeari;
 }
 
 function clearLinesOutsideGraph(width, height) {
