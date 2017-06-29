@@ -16,7 +16,7 @@ var maxTagTimelineLines = 100;
 var tagsByArtist = {};
 
 // reset depending on selections
-var tagsPerYear = {};
+var tagsPerBin = {};
 var filteredTags = [];
 
 function makeTagCloud(username, count, period) {
@@ -28,12 +28,12 @@ function makeTagCloud(username, count, period) {
 }
 
 function makeTagTimeline(username) {
-    tagsPerYear = {};
+    tagsPerBin = {};
     filteredTags = [];
     var onChartsDone = function (data) {
         if (!working)
             return;
-        fetchWeeklyArtistCharts(username, data.weeklychartlist, fetchTagsByYear, 50, maxWeeklyTagArtistCount);
+        fetchWeeklyArtistCharts(username, data.weeklychartlist, fetchTagsByBin, 50, maxWeeklyTagArtistCount);
     }
     fetchWeeklyCharts(username, onChartsDone);
 }
@@ -81,46 +81,46 @@ function fetchTagsForCloud(artists) {
     }
 }
 
-function fetchTagsByYear(artistsByYear) {
-    tagsPerYear = {};
-    fetchTagsForYear(Object.keys(artistsByYear)[0], artistsByYear);
+function fetchTagsByBin(artistsByBin, binType) {
+    tagsPerBin = {};
+    fetchTagsForBin(Object.keys(artistsByBin)[0], artistsByBin, binType);
 }
 
-function fetchTagsForYear(year, artistsByYear) {
+function fetchTagsForBin(bin, artistsByBin, binType) {
     if (!working)
         return;
     
-    var artistlist = artistsByYear[year];
+    var artistlist = artistsByBin[bin];
     artistlist = artistlist.sort(function(a, b) {
         return b.totalplaycount - a.totalplaycount;
     });
     
     var maxArtists = Math.min(artistlist.length, maxTimelineBinArtistCount);
-    console.log("Fetching tags for " + maxArtists + " / " + artistlist.length + " artists for the year " + year);
+    console.log("Fetching tags for " + maxArtists + " / " + artistlist.length + " artists for the bin " + bin);
     
-    var keys = Object.keys(artistsByYear);
-    var yearIndex = keys.indexOf(year);
+    var keys = Object.keys(artistsByBin);
+    var binIndex = keys.indexOf(bin);
 
     var totalartists = maxArtists;
     var artistsready = 0;
     
-    tagsPerYear[year] = {};
+    tagsPerBin[bin] = {};
     
     var onArtistOK = function (artist, data) {
-        tagsPerYear[year][getArtistID(artist)] = data;
+        tagsPerBin[bin][getArtistID(artist)] = data;
     };
     
     var onArtistReady = function (artist) {
         artistsready++;
-        var yearPercentage = yearIndex / keys.length;
-        yearPercentage += artistsready / totalartists / keys.length;
-        showLoaded(50 + yearPercentage * 50);
+        var binPercentage = binIndex / keys.length;
+        binPercentage += artistsready / totalartists / keys.length;
+        showLoaded(50 + binPercentage * 50);
         if (artistsready == totalartists) {
-            if (yearIndex > 0) 
-                buildTagTimelineVis(artistsByYear);
+            if (binIndex > 0) 
+                buildTagTimelineVis(artistsByBin, binType);
                 
-            if (yearIndex < keys.length - 1) {
-                fetchTagsForYear(keys[yearIndex + 1], artistsByYear);
+            if (binIndex < keys.length - 1) {
+                fetchTagsForBin(keys[binIndex + 1], artistsByBin, binType);
             } else {
                 stopLoading("Done.", "");
             }
@@ -134,7 +134,7 @@ function fetchTagsForYear(year, artistsByYear) {
     }
     
     if (totalartists === 0) {
-        delete tagsPerYear[year];
+        delete tagsPerBin[bin];
         totalartists = 1;
         onArtistReady();
     }
@@ -206,30 +206,30 @@ function buildCloudVis(artists) {
     stopLoading("Done.", "");
 }
 
-function buildTagTimelineVis(artistsByYear) {
+function buildTagTimelineVis(artistsByBin, binType) {
     if (!working)
         return;
     
     console.log("Building timeline..");
     clearVis();
     
-    var svg = setupSVG();
-    var height = getChartHeight();
-    var width = getChartWidth();
-    
-    // Set up data
-    var years = Object.keys(tagsPerYear);
-    var lastyear = years[years.length -1];
-    var datas = GetTimelineData(artistsByYear, tagsPerYear);
-    var dataByYear = datas.byYear;
+    // Set up data    
+    var bins = Object.keys(tagsPerBin).sort(sortBins(binType));
+    var lastBin = bins[bins.length -1];
+    var datas = GetTimelineData(artistsByBin, tagsPerBin, binType);
+    var dataByBin = datas.byBin;
     var dataByTag = datas.byTag;
     var dataByTagFiltered = dataByTag.slice(0, maxTagTimelineLines);
     
-    var	parseDate = d3.time.format("%Y-%m").parse;
+    // Set up SVG
+    var svg = setupSVG(bins.length);
+    var height = getChartHeight(bins.length);
+    var width = getChartWidth(bins.length);
      
-    // Set the ranges
+    // Set the ranges    
+    var	parseDate = d3.time.format("%Y-%m").parse;
     var	x = d3.time.scale().range([0, width]);
-	x.domain(d3.extent(dataByYear, function(d) { return parseDate(d.date); }));
+	x.domain(d3.extent(dataByBin, function(d) { return parseDate(d.date); }));
     var	y = d3.scale.linear().domain([0, 100]).range([height, 0]);
      
     // Define the line
@@ -257,12 +257,12 @@ function buildTagTimelineVis(artistsByYear) {
     tag.append("path")
         .attr("class", "tagline highlightable")
         .attr("tag", function (d) { return d.name; })
-        .attr("d", function(d) { return tagline(d.years); })
+        .attr("d", function(d) { return tagline(d.bins); })
         .on("mouseover", function (d) {
-            var year = getInputEventYear(x);
-            var yeari = getYearIndex(d.years, year);
+            var bin = getInputEventBin(x, binType);
+            var bini = getBinIndex(d.bins, bin);
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, "%", getArtistsString(d.years[yeari]));
+            showTooltip(x, y, d, "%", getArtistsString(d.bins[bini]), binType);
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -272,14 +272,14 @@ function buildTagTimelineVis(artistsByYear) {
     clearLinesOutsideGraph();
     
     tag.selectAll(".dot")
-        .data(function (d) { return d.years })
+        .data(function (d) { return d.bins })
         .enter().append("circle")
         .attr("class", "dot highlightable")
         .attr("cx", function (d) { return x(parseDate(d.date)); } )
         .attr("cy", function (d) { return y(d.relativecount); } )
         .on("mouseover", function (d) {
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, "%", getArtistsString(d));
+            showTooltip(x, y, d, "%", getArtistsString(d), binType);
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -288,7 +288,9 @@ function buildTagTimelineVis(artistsByYear) {
     
     tag.append("text")
         .attr("class", "tagname highlightable")
-        .attr("transform", function (d) { return "translate(" + width + "," + y(d.years[d.years.length-1].relativecount) + ")"})
+        .attr("transform", function (d) { 
+            return "translate(" + width + "," + y(d.bins[d.bins.length-1].relativecount) + ")";
+        })
         .attr("x", 4)
         .attr("dy", "0.35em")
         .style("font", "11px sans-serif")
@@ -297,9 +299,8 @@ function buildTagTimelineVis(artistsByYear) {
         .on("mouseout", onLabelMouseOut);
  
 	// Add the axes
-    var	xAxis = d3.svg.axis().scale(x);
-    var	yAxis = d3.svg.axis().scale(y)
-        .orient("left").ticks(5);
+    var	xAxis = d3.svg.axis().scale(x).ticks(bins.length);
+    var	yAxis = d3.svg.axis().scale(y).orient("left").ticks(5);
 	svg.append("g")
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + height + ")")
@@ -310,30 +311,32 @@ function buildTagTimelineVis(artistsByYear) {
 		.call(yAxis);
 }
 
-function GetTimelineData(artistsByYear, tagsPerYear) {
+function GetTimelineData(artistsByBin, tagsPerBin, binType) {
     var dataByTag = [];
-    var dataByYear = [];
+    var dataByBin = [];
     var dataByTagMapped = {};
     
-    var years = Object.keys(tagsPerYear);
+    var bins = Object.keys(tagsPerBin).sort(sortBins(binType));
     
-    var makeDate = function(year) {
-        return year + "-01";
+    var makeDate = function(bin) {
+        if (binType === binTypeYears)
+            return bin + "-01";
+        return bin;
     }
     
     var getOrCreateTagItem = function (tagname) {
         if (!dataByTagMapped[tagname]) {
             var dt = {};
             dt.name = tagname;
-            dt.years = [];
-            for (var i = 0; i < years.length; i++) {
-                dt.years[i] = {};
-                dt.years[i].name = tagname;
-                dt.years[i].year = parseInt(years[i]);
-                dt.years[i].date = makeDate(years[i]);
-                dt.years[i].count = 0;
-                dt.years[i].relativecount = 0;
-                dt.years[i].artists = [];
+            dt.bins = [];
+            for (var i = 0; i < bins.length; i++) {
+                dt.bins[i] = {};
+                dt.bins[i].name = tagname;
+                dt.bins[i].bin = bins[i];
+                dt.bins[i].date = makeDate(bins[i]);
+                dt.bins[i].count = 0;
+                dt.bins[i].relativecount = 0;
+                dt.bins[i].artists = [];
             }
             dataByTagMapped[tagname] = dt;
             dataByTag.push(dt);
@@ -341,16 +344,16 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
         return dataByTagMapped[tagname];
     };
     
-    var year;
-    for (var i = 0; i < years.length; i++) {
-        year = years[i];
+    var bin;
+    for (var i = 0; i < bins.length; i++) {
+        bin = bins[i];
         var dy = {};
-        dy.year = parseInt(year);
-        dy.date = makeDate(year);
+        dy.bin = bin;
+        dy.date = makeDate(bin);
         dy.tags = {};
         dy.tagsscaled = {};
         dy.maxcount = 0;
-        var counts = getTagCounts(tagsPerYear[year], artistsByYear[year]);
+        var counts = getTagCounts(tagsPerBin[bin], artistsByBin[bin]);
         var tagcounts = counts.counts;
         var artistsByTag = counts.artists;
         var tagcounttotal = counts.total;
@@ -359,8 +362,8 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
             var tagname = sortedNames[j];
             var dt = getOrCreateTagItem(tagname);
             var count = tagcounts[tagname];
-            dt.years[i].count = count;
-            dt.years[i].artists = artistsByTag[tagname].sort(function (a, b) {
+            dt.bins[i].count = count;
+            dt.bins[i].artists = artistsByTag[tagname].sort(function (a, b) {
                 return b.weight - a.weight;
             });
             dy.tags[tagname] = count;
@@ -372,24 +375,24 @@ function GetTimelineData(artistsByYear, tagsPerYear) {
             var dt = getOrCreateTagItem(tagname);
             var count = tagcounts[tagname];
             var relativecount = parseFloat(count) / dy.maxcount * 100;
-            dt.years[i].relativecount = relativecount;
-            dt.years[i].value = relativecount;
+            dt.bins[i].relativecount = relativecount;
+            dt.bins[i].value = relativecount;
             dy.tagsscaled[tagname] = relativecount;
         }
-        dataByYear.push(dy);
+        dataByBin.push(dy);
     }
     
-    var lastyear = years.length -1;
+    var lastbin = bins.length -1;
     dataByTag = dataByTag.sort(function (a,b) {
-        var valA = a[lastyear] ? a[lastyear].count : 0;
-        var valB = b[lastyear] ? b[lastyear].count : 0;
+        var valA = a[lastbin] ? a[lastbin].count : 0;
+        var valB = b[lastbin] ? b[lastbin].count : 0;
         return valB - valA;
     });
     
     console.log("timeline data:");
     console.log(dataByTag);
-    console.log(dataByYear);
-    return { byYear : dataByYear, byTag: dataByTag };
+    console.log(dataByBin);
+    return { byBin : dataByBin, byTag: dataByTag };
 }
 
 function getTagCounts(tagsByArtist, artists) {

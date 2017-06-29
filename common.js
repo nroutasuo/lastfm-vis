@@ -10,6 +10,8 @@ var artistChartsByUser = {};
 // constants
 var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 1;
+var binTypeYears = "years";
+var binTypeMonths = "months";
 
 function fetchWeeklyCharts(user, callback) {
     console.log("Fetching weekly charts for " + user + "...");
@@ -47,11 +49,12 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
     
     console.log("Fetching weekly artists charts for " + username);
     
-    // TODO choose time bins depending on how much data the user has - years or months
     var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
     var chartsDone = 0;
     var artistsByYear = {};
-    var artistsByID = {};
+    var artistsByMonth = {};
+    var artistsByIDYear = {};
+    var artistsByIDMonth = {};
     
     var onWeekDone = function (data) {
         if (!working)
@@ -60,7 +63,9 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
         chartsDone++;
         showLoaded(chartsDone / chartsToGet * loadingProcessFactor);
         
-        var year = parseInt(new Date(data.weeklyartistchart['@attr'].from * 1000).getFullYear());
+        var date = new Date(data.weeklyartistchart['@attr'].from * 1000);
+        var year = parseInt(date.getFullYear());
+        var month = year + "-" + (date.getMonth() + 1);
         
         var maxArtists = Math.min(data.weeklyartistchart.artist.length, maxWeeklyArtists);
         for (var j = 0; j < maxArtists; j++) {
@@ -68,16 +73,34 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
             if (artist.playcount < minWeeklyArtistPlayCount)
                 continue;            
             
+            // initialize list entries
             if (!artistsByYear[year])
                 artistsByYear[year] = [];
-            if (!artistsByID[year])
-                artistsByID[year] = {};
+            if (!artistsByMonth[month])
+                artistsByMonth[month] = [];
+            
+            if (!artistsByIDYear[year])
+                artistsByIDYear[year] = {};
+            if (!artistsByIDMonth[month])
+                artistsByIDMonth[month] = {};
             
             var artistID = getArtistID(artist);
-            var existingartist = artistsByID[year][artistID];
+            
+            // track yearly playcounts
+            var existingartist = artistsByIDYear[year][artistID];
             if (!existingartist) {
-                artistsByID[year][artistID] = artist;
+                artistsByIDYear[year][artistID] = artist;
                 artistsByYear[year].push(artist);
+                artist.totalplaycount = parseInt(artist.playcount);
+            } else {
+                existingartist.totalplaycount += parseInt(artist.playcount);
+            }
+            
+            // track monthly playcounts
+            existingartist = artistsByIDMonth[month][artistID];
+            if (!existingartist) {
+                artistsByIDMonth[month][artistID] = artist;
+                artistsByMonth[month].push(artist);
                 artist.totalplaycount = parseInt(artist.playcount);
             } else {
                 existingartist.totalplaycount += parseInt(artist.playcount);
@@ -85,13 +108,16 @@ function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessF
         }
         
         if (chartsDone == chartsToGet) {
-            for (var y in artistsByYear) {
-                artistsByYear[y].sort(function(a, b) {
+            var binType = Object.keys(artistsByIDYear).length > 2 ? binTypeYears : binTypeMonths;
+            var artistsByBin = binType === binTypeMonths ? artistsByMonth : artistsByYear;
+            for (var y in artistsByBin) {
+                artistsByBin[y].sort(function(a, b) {
                     return b.totalplaycount - a.totalplaycount;
                 });
             }
-            console.log(artistsByYear);
-            doneCallback(artistsByYear);
+            console.log("bin type: " + binType);
+            console.log(artistsByBin);
+            doneCallback(artistsByBin, binType);
         }
     };
     for (var i = 0; i < chartsToGet; i++) {
@@ -154,6 +180,20 @@ function getArtistNameID(artistname) {
     return "artist-" + simplifyString(artistname);
 }
 
+function sortBins(binType) {
+    if (binType === binTypeYears) {        
+        return function (a, b) {
+            return (a - b);
+        };
+    }
+    
+    return function (a, b) {
+        var valA = parseInt(a.split("-")[0]*12) + parseInt(a.split("-")[1]);
+        var valB = parseInt(b.split("-")[0]*12) + parseInt(b.split("-")[1]);
+        return valA - valB;
+    };
+}
+
 
 // STRING STUFF
 
@@ -164,11 +204,10 @@ function simplifyString(s) {
 
 // SVG STUFF
 
-function setupSVG() {
-    // TODO limit width by number of data points on x, max ~300 px per point
+function setupSVG(numBins) {
     var	margin = getChartMargin(),
-        width = getChartWidth(),
-        height = getChartHeight();
+        width = getChartWidth(numBins),
+        height = getChartHeight(numBins);
     
     var	svg = d3.select("#sec_vis")
         .append("svg")
@@ -195,7 +234,7 @@ function setupSVG() {
     return svg;
 }
 
-function showTooltip(x, y, d, valuesuffix, details) {
+function showTooltip(x, y, d, valuesuffix, details, binType) {
     d3.select("#tooltip").transition()		
         .duration(200)		
         .style("opacity", .9);
@@ -203,18 +242,18 @@ function showTooltip(x, y, d, valuesuffix, details) {
         .style("left", (d3.event.pageX - 60) + "px")		
         .style("top", (d3.event.pageY + 10) + "px");
         
-    var year = getInputEventYear(x);
+    var bin = getInputEventBin(x, binType);
     
     var value = "??";
-    if (d.years) {
-        var yeari = getYearIndex(d.years, year);
-        value = yeari >= 0 ? d.years[yeari].value : "??";
+    if (d.bins) {
+        var bini = getBinIndex(d.bins, bin);
+        value = bini >= 0 ? d.bins[bini].value : "??";
     } else {
         value = d.value;
     }
     
     d3.select("#tooltip .tooltip-line").html(d.name);
-    d3.select("#tooltip .tooltip-x").html(year);
+    d3.select("#tooltip .tooltip-x").html(bin);
     d3.select("#tooltip .tooltip-y").html(Math.round(value) + valuesuffix);
     d3.select("#tooltip .tooltip-details").html(details ? details : "");
     d3.select("#tooltip .tooltip-details").style("display", details ? "block" : "none");
@@ -257,20 +296,21 @@ function onLabelMouseOut(d) {
     d3.select(this.parentNode).selectAll(".dot").classed("highlighted", false);
 }
 
-function getInputEventYear(x) {
+function getInputEventBin(x, binType) {
     var visoffset = $(".visarea").offset();
     var relX = d3.event.pageX - visoffset.left;
-    var year = x.invert(relX).getFullYear();
-    return year;
+    var date = x.invert(relX);
+    var bin = binType === binTypeYears ? date.getFullYear() : date.getFullYear() + "-" + (date.getMonth() + 1);
+    return bin;
 }
 
-function getYearIndex(years, year) {
-    var yeari = -1;
-    for (var i = 0; i < years.length; i++) {
-        if (years[i].year == year)
-            yeari = i;
+function getBinIndex(bins, bin) {
+    var bini = -1;
+    for (var i = 0; i < bins.length; i++) {
+        if (bins[i].bin == bin)
+            bini = i;
     }
-    return yeari;
+    return bini;
 }
 
 function clearLinesOutsideGraph(width, height) {
@@ -282,12 +322,14 @@ function clearLinesOutsideGraph(width, height) {
         .style("fill", "white");
 }
 
-function getChartWidth() {
+function getChartWidth(numBins) {
     var margin = getChartMargin();
-    return getMaxVisWidth() - margin.left - margin.right;
+    var maxwidthperbin = getChartHeight(numBins);
+    var viswidth = Math.min(maxwidthperbin * (numBins - 1), getMaxVisWidth());
+    return viswidth - margin.left - margin.right;
 }
 
-function getChartHeight() {
+function getChartHeight(numBins) {
     var margin = getChartMargin();
     return getMaxVisHeight() - margin.top - margin.bottom;;
 }

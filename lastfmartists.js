@@ -17,7 +17,7 @@ function makeArtistTimeline(username) {
     fetchWeeklyCharts(username, onChartsDone);
 }
 
-function buildArtistTimelineVis(artistsByYear) {
+function buildArtistTimelineVis(artistsByBin, binType) {
     if (!working)
         return;
     
@@ -25,24 +25,24 @@ function buildArtistTimelineVis(artistsByYear) {
     console.log("Building timeline..");
     clearVis();
     
-    var svg = setupSVG();
-    var height = getChartHeight();
-    var width = getChartWidth();
-    
     // Set up data
-    var years = Object.keys(artistsByYear);
-    var lastyear = years[years.length -1];
-    var datas = GetArtistTimelineData(artistsByYear);
-    var dataByYear = datas.byYear;
+    var bins = Object.keys(artistsByBin).sort(sortBins(binType));
+    var lastbin = bins[bins.length -1];
+    var datas = GetArtistTimelineData(artistsByBin, binType);
+    var dataByBin = datas.byBin;
     var dataByArtist = datas.byArtist;
     // TODO based on what to filter artists?
     var dataByArtistFiltered = dataByArtist.slice(0, maxArtistTimelineLines);
     
-    var	parseDate = d3.time.format("%Y-%m-%d").parse;
+    // Set up SVH
+    var svg = setupSVG(bins.length);
+    var height = getChartHeight(bins.length);
+    var width = getChartWidth(bins.length);
      
-    // Set the ranges
-    var	x = d3.time.scale().range([0, getChartWidth()]);
-	x.domain(d3.extent(dataByYear, function(d) { return parseDate(d.date); }));
+    // Set the ranges    
+    var	parseDate = d3.time.format("%Y-%m-%d").parse;
+    var	x = d3.time.scale().range([0, width]);
+	x.domain(d3.extent(dataByBin, function(d) { return parseDate(d.date); }));
     var	y = d3.scale.linear().domain([0, datas.maxplaycount]).range([height, 0]);
      
     // Define the line
@@ -62,7 +62,7 @@ function buildArtistTimelineVis(artistsByYear) {
     artist.append("path")
         .attr("class", "tagline highlightable")
         .attr("artist", function (d) { return d.name; })
-        .attr("d", function(d) { return artistline(d.years); })
+        .attr("d", function(d) { return artistline(d.bins); })
         .on("mouseover", function (d) { 
             onPathMouseOver(this, d);
             showTooltip(x, y, d, " plays", "");
@@ -75,7 +75,7 @@ function buildArtistTimelineVis(artistsByYear) {
     clearLinesOutsideGraph(width, height);
     
     artist.selectAll(".dot")
-        .data(function (d) { return d.years })
+        .data(function (d) { return d.bins })
         .enter().append("circle")
         .attr("class", "dot highlightable")
         .attr("cx", function (d) { return x(parseDate(d.date)); } )
@@ -91,7 +91,7 @@ function buildArtistTimelineVis(artistsByYear) {
       
     artist.append("text")
         .attr("class", "tagname highlightable")
-        .attr("transform", function (d) { return "translate(" + width + "," + y(d.years[d.years.length-1].count) + ")"})
+        .attr("transform", function (d) { return "translate(" + width + "," + y(d.bins[d.bins.length-1].count) + ")"})
         .attr("x", 4)
         .attr("dy", "0.35em")
         .style("font", "11px sans-serif")
@@ -113,20 +113,18 @@ function buildArtistTimelineVis(artistsByYear) {
 		.call(yAxis);
 }
 
-function GetArtistTimelineData(artistsByYear) {    
+function GetArtistTimelineData(artistsByBin, binType) {    
     var dataByArtist = [];
-    var dataByYear = [];
+    var dataByBin = [];
     var dataByArtistMapped = {};
     
-    var years = Object.keys(artistsByYear);
+    var bins = Object.keys(artistsByBin).sort(sortBins(binType));
     var maxplaycount = 0;
     
-    var makeDate = function(year) {
-        return year + "-01" + "-01";
-    }
-    
-    var makeDate = function(year) {
-        return year + "-01" + "-01";
+    var makeDate = function(bin) {
+        if (binType === binTypeYears)
+            return bin + "-01" + "-01";
+        return bin + "-01";
     }
     
     var getOrCreateArtistItem = function (artist) {
@@ -134,13 +132,13 @@ function GetArtistTimelineData(artistsByYear) {
         if (!dataByArtistMapped[artistID]) {
             var dt = {};
             dt.name = artist.name;
-            dt.years = [];
-            for (var i = 0; i < years.length; i++) {
-                dt.years[i] = {};
-                dt.years[i].year = parseInt(years[i]);
-                dt.years[i].date = makeDate(years[i]);
-                dt.years[i].count = 0;
-                dt.years[i].name = dt.name;
+            dt.bins = [];
+            for (var i = 0; i < bins.length; i++) {
+                dt.bins[i] = {};
+                dt.bins[i].bin = parseInt(bins[i]);
+                dt.bins[i].date = makeDate(bins[i]);
+                dt.bins[i].count = 0;
+                dt.bins[i].name = dt.name;
             }
             dataByArtistMapped[artistID] = dt;
             dataByArtist.push(dt);
@@ -148,39 +146,39 @@ function GetArtistTimelineData(artistsByYear) {
         return dataByArtistMapped[artistID];
     };
     
-    var year;
-    for (var i = 0; i < years.length; i++) {
-        year = years[i];
+    var bin;
+    for (var i = 0; i < bins.length; i++) {
+        bin = bins[i];
         var dy = {};
-        dy.year = parseInt(year);
-        dy.date = makeDate(year);
+        dy.bin = parseInt(bin);
+        dy.date = makeDate(bin);
         dy.artists = {};
         dy.maxcount = 0;
-        for (var j = 0; j < artistsByYear[year].length; j++) {
-            var artist = artistsByYear[year][j];
+        for (var j = 0; j < artistsByBin[bin].length; j++) {
+            var artist = artistsByBin[bin][j];
             var artistID = getArtistID(artist);
             var dt = getOrCreateArtistItem(artist);
             var count = artist.totalplaycount;
-            dt.years[i].count = count;
-            dt.years[i].value = count;
+            dt.bins[i].count = count;
+            dt.bins[i].value = count;
             dy.artists[artistID] = count;
             if (count > dy.maxcount)
                 dy.maxcount = count;
             if (count > maxplaycount)
                 maxplaycount = count;
         }
-        dataByYear.push(dy);
+        dataByBin.push(dy);
     }
     
-    var lastyear = years.length -1;
+    var lastbin = bins.length -1;
     dataByArtist = dataByArtist.sort(function (a,b) {
-        var valA = a.years[lastyear] ? a.years[lastyear].count : 0;
-        var valB = b.years[lastyear] ? b.years[lastyear].count : 0;
+        var valA = a.bins[lastbin] ? a.bins[lastbin].count : 0;
+        var valB = b.bins[lastbin] ? b.bins[lastbin].count : 0;
         return valB - valA;
     });
     
     console.log("timeline data:");
     console.log(dataByArtist);
-    console.log(dataByYear);
-    return { byYear : dataByYear, byArtist: dataByArtist, maxplaycount: maxplaycount };
+    console.log(dataByBin);
+    return { byBin : dataByBin, byArtist: dataByArtist, maxplaycount: maxplaycount };
 }
