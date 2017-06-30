@@ -335,7 +335,8 @@ function getChartHeight(numBins) {
 }
 
 function getChartMargin() {
-    return {top: 20, right: 150, bottom: 30, left: 25};
+    var w = getMaxVisWidth();
+    return {top: 10, right: Math.min(150, w / 4), bottom: 25, left: 25};
 }
 
 function getMaxVisWidth() {
