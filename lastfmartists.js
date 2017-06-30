@@ -65,7 +65,7 @@ function buildArtistTimelineVis(artistsByBin, binType) {
         .attr("d", function(d) { return artistline(d.bins); })
         .on("mouseover", function (d) { 
             onPathMouseOver(this, d);
-            showTooltip(x, y, d, " plays", "");
+            showTooltip(x, y, d, " plays", "", binType);
         })
         .on("mouseout", function (d) { 
             onPathMouseOut(this, d);
@@ -94,7 +94,7 @@ function buildArtistTimelineVis(artistsByBin, binType) {
         .attr("transform", function (d) { return "translate(" + width + "," + y(d.bins[d.bins.length-1].count) + ")"})
         .attr("x", 4)
         .attr("dy", "0.35em")
-        .style("font", "11px sans-serif")
+        .style("font", "0.85em sans-serif")
         .text(function(d) { return d.name })
         .on("mouseover", onLabelMouseOver)
         .on("mouseout", onLabelMouseOut);
@@ -107,6 +107,7 @@ function buildArtistTimelineVis(artistsByBin, binType) {
 		.attr("class", "x axis")
 		.attr("transform", "translate(0," + height + ")")
 		.call(xAxis);
+        
 	svg.append("g")		
 		.attr("class", "y axis")
         .attr("transform", "translate(0,0)")

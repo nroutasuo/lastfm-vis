@@ -164,14 +164,14 @@ function makeVisTitle() {
 }
 
 function getVisTypeDetails() {
-    var tagscommon = "Obvious tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
+    var tagscommon = "Nondescriptive tags like 'seen live' are filtered out and some common spelling variations ('post rock' and 'post-rock') are combined.";
     switch (vistype) {
         case vistypeTimelineT:
-            return "Tag count is based on tags for artists appearing on the user's weekly charts on the given time period (top " + maxWeeklyArtistCount + " artists with at least " + minWeeklyArtistPlayCount + " plays). The chart is scaled so that the top tag for each period is at 100% and the rest are relative to that. " + tagscommon; 
+            return "Tags are based on artists appearing on the user's weekly charts on the given time period (top " + maxWeeklyArtistCount + " artists with at least " + minWeeklyArtistPlayCount + " plays). The chart is scaled so that the top tag for each period is at 100% and the rest are relative to it. " + tagscommon; 
         case vistypeCloud:
-            return "Tag count is based on the number of times it's listed for top artists. " + tagscommon;
+            return "Tag count is based on the number of times it's listed for top artists in the given time period. " + tagscommon;
         case vistypeTimelineA:
-            return "Artist count per year is based on the number of plays on the user's weekly charts for all weeks that begin on the given year.";
+            return "Artist playcount per year is based on the number of plays on the user's weekly charts for all weeks that begin on the given year. If there isn't enough data to show years, the chart users months.";
         case vistypeAlbumChart:
             return "Albums are filtered to avoid duplicates, special editions, demos, etc, etc, so it's possible some albums are missing. Then again, there probably are duplicates anyway. Release years are not very reliable.";
         default:
@@ -187,16 +187,18 @@ function stopLoading(info, error) {
 }
 
 function showError(msg) {
-	if (msg.length > 0)
+	if (msg.length > 0) {
+        $("#sec_status").toggle(true);
 		$("#errormsg").text("Error: " + msg);
-	else
+	} else
 		$("#errormsg").text("");
 }
 
 function showInfo(msg) {
-	if (msg.length > 0)
+	if (msg.length > 0) {
+        $("#sec_status").toggle(true);
 		$("#infomsg").text(msg);
-	else
+	} else
 		$("#infomsg").text("");
 }
 

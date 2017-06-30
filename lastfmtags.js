@@ -293,7 +293,7 @@ function buildTagTimelineVis(artistsByBin, binType) {
         })
         .attr("x", 4)
         .attr("dy", "0.35em")
-        .style("font", "11px sans-serif")
+        .style("font", "0.85em sans-serif")
         .text(function(d) { return d.name })
         .on("mouseover", onLabelMouseOver)
         .on("mouseout", onLabelMouseOut);

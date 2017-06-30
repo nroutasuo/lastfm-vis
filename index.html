@@ -6,6 +6,7 @@
     <meta name="description" content="Last.fm tools and visualizations. Tag cloud, tag timeline, album charter.">
     <meta name="author" content="Noora Routasuo">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -65,12 +66,14 @@
             Filter decades</label>
         </span>
     </span>
-	<button class="btn" type="submit" onclick="startVis();">Submit</button>
-	<button class="btn" onclick="cancelVis();">Cancel</button>
+    <span class="inputcontainer">
+        <button class="btn" type="submit" onclick="startVis();">Submit</button>
+        <button class="btn" onclick="cancelVis();">Cancel</button>
+    </span>
     </p>
 </section>
 
-<section id="sec_status">
+<section id="sec_status" style="display:none;">
     <h3 id="visheader"></h3>
 	<p id="errormsg"></p>
 	<p id="infomsg"></p>

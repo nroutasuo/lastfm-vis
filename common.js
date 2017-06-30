@@ -331,7 +331,7 @@ function getChartWidth(numBins) {
 
 function getChartHeight(numBins) {
     var margin = getChartMargin();
-    return getMaxVisHeight() - margin.top - margin.bottom;;
+    return getMaxVisHeight() - margin.top - margin.bottom;
 }
 
 function getChartMargin() {
@@ -346,7 +346,7 @@ function getMaxVisWidth() {
 }
 
 function getMaxVisHeight() {
-    var height = $(window).height();
+    var height = Math.min($(window).height(), $(window).width());
     if (!height)
         height = 400;
     else

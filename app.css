@@ -4,7 +4,7 @@ body {
     background: #D8DEC3;
     color: #222222;
     font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
-    font-size: 14px;
+    font-size: 1em;
     line-height: 1.2em;
     margin: 0;
     padding: 0;
@@ -33,7 +33,10 @@ section#sec_vis {
     border-top: 1px solid #CCCCCC;
     border-bottom: 1px solid #CCCCCC;
     overflow-x: scroll;
-    padding: 20px;
+}
+
+#visdetailsresult, #visdetailstype {
+    font-size: 85%;
 }
 
 footer {
@@ -42,7 +45,7 @@ footer {
 
 h1 {
     color: #4A3D3D;
-    font-size: 38.8px;
+    font-size: 2.75em;
     display: block;
     margin-bottom: 0;
     width: auto;
@@ -67,7 +70,7 @@ h2, h3, h4, h5 {
     color: #4A3D3D;
 }
 
-h2 { font-size: 23.3px; }
+h2 { font-size: 2em; }
 
 a:link { 
     color: #4A3D3D;
@@ -105,7 +108,7 @@ input {
 
 button {
     display: inline-block;
-    margin: 0 10px;
+    margin: 0 10px 0 0;
     padding: 2px 4px;
     background: #D9DECA;
     border: 1px solid rgba(0,0,0,0.15);
@@ -144,6 +147,8 @@ div.tabbar button.active {
 
 .inputcontainer {
     transition: 0.2s;
+    white-space: nowrap;
+    margin: 0 0.5em 0.25em 0;
 }
 
 .tabbar {
@@ -365,8 +370,8 @@ path {
 }
 
 svg.highlighted .highlightable {
-    fill-opacity: 0.5;
-    stroke-opacity: 0.5;
+    fill-opacity: 0.25;
+    stroke-opacity: 0.25;
 }
 
 svg.highlighted .highlighted {
@@ -392,5 +397,26 @@ p {
 
     p {
         margin-right: auto;
+    }
+    
+    .tabbutton {
+        width: 25%;
+        height: 100%;
+        padding: 0 !important;
+    }
+    
+    .tabbar {
+        height: 2em;        
+    }
+    
+    .tooltip {
+        position: fixed;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0 !important;
+        border-width: 0 0 1px 0;
     }
 }
