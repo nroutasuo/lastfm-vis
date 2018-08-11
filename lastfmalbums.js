@@ -353,10 +353,6 @@ function getAlbumColID(artistname) {
     return "albums-" + getArtistNameID(artistname);
 }
 
-function getAlbumID(albumname) {
-    return "album-" + albumname.toLowerCase().replace(/ /g, "");
-}
-
 function getReleaseYear(albuminfo) {
     var year = getYearFromReleaseDate(albuminfo.album.wiki ? albuminfo.album.wiki.published : albuminfo.album.releasedate)
     // if (year == "????") console.log(albuminfo)
@@ -492,7 +488,7 @@ function filterAlbumByDetailedInfo(albuminfo, allalbums, artist) {
     return "";
 }
 
-function registerFiltered (reason, album, artistName) {
+function registerFiltered(reason, album, artistName) {
     if (album) {
         if(!filtered_albums[reason])
             filtered_albums[reason] = [];
@@ -501,8 +497,26 @@ function registerFiltered (reason, album, artistName) {
         if(!filtered_albums[reason][artistID])
             filtered_albums[reason][artistID] = [];
             
-        filtered_albums[reason][artistID][filtered_albums[reason][artistID].length] = album.name;
+        filtered_albums[reason][artistID][filtered_albums[reason][artistID].length] = album.name + " by " + artistName;
         
+        var filtered = "";
+        for (var reason in filtered_albums) {
+            if (reason === "disc-n")
+                continue;
+            if (reason === "null")
+                continue;
+            if (reason === "duplicate")
+                continue;
+            for (var artist in filtered_albums[reason]) {
+                for (var i in filtered_albums[reason][artist]) {
+                    filtered += filtered_albums[reason][artist][i] + ", ";
+                }
+            }
+        }
+        
+        filtered = filtered.substr(0, filtered.length-2);
+        
+        showVisDetails("Filtered albums: " + filtered);
         // console.log("Filtered album [" + reason + "]: " + album.name + " (" + album.playcount + " scrobbles by all users)");
     }        
 }

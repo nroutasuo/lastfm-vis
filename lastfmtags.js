@@ -14,9 +14,13 @@ var maxTagTimelineLines = 100;
 
 // keep between visualizations
 var tagsByArtist = {};
+var tagsByAlbum = {};
+var tagsByTrack = {};
+var topArtists = {};
+var topAlbums = {};
+var topTracks = {};
 
 // reset depending on selections
-var topArtists = {};
 var tagsPerBin = {};
 var filteredTags = [];
 
@@ -41,20 +45,44 @@ function makeTagTimeline(username) {
 
 function makeSubTagCloud(event, username, count, period, tag) {
     console.log("making sub tag cloud: " + username + ", " + count + ", " + period + " " + tag);
+    showLoaded(0);
     
     var artists = null;
-    var albums = [ "Album 1" ];
-    var tracks = [ "Track 1", "Track 2", "Track 3"];
+    var albums = null;
+    var tracks = null;
+    var maxlen = 25;
+    
+    var numalbums = 0;
+    var albumsready = 0;
+    var numtracks = 0;
+    var tracksready = 0;
+    
+    var updateLoaded = function () {
+        var percentage = 0;
+        if (artists) percentage += 20;
+        if (albums) percentage += 40;
+        if (tracks) percentage += 40;
+        showLoaded(percentage);
+    }
+    
+    var checkReady = function () {
+        updateLoaded();
+        if (artists && albums && albumsready == numalbums && tracks && tracksready == numtracks) {
+            stopLoading("Done", "");
+            buildSubCloudVis(artists, albums, tracks);
+        }
+    }
     
     var onArtistsDone = function (data) {
         console.log("got " + data.topartists.artist.length + " artists");
         artists = [];
         for (var i = 0; i < data.topartists.artist.length; i++) {
+            if (artists.length >= maxlen) break;
             var artist = data.topartists.artist[i];
             var artistID = getArtistID(artist);
             var tags = tagsByArtist[artistID];
             if (!tags) continue;
-            artisttaglist = tags.toptags.tag;
+            var artisttaglist = tags.toptags.tag;
             for (var j = 0; j < artisttaglist.length; j++) {
                 tagname = cleanupTagName(artisttaglist[j].name);
                 if (tagname == tag) {
@@ -64,10 +92,67 @@ function makeSubTagCloud(event, username, count, period, tag) {
             }
             
         }
-        buildSubCloudVis(artists, albums, tracks);
-    }
+        checkReady();
+    };
+    
+    var onAlbumsDone = function (data) {
+        console.log("got " + data.topalbums.album.length + " albums");
+        albums = [];
+        numalbums = Math.min(data.topalbums.album.length, maxlen);
+        albumsready = 0;
+        var onAlbumTagsReady = function (album) {
+            albumsready++;
+            var albumID = getAlbumID(album);
+            tags = tagsByAlbum[albumID];
+            if (tags) {
+                var albumtagslist = tags.toptags.tag;
+                for (var j = 0; j < albumtagslist.length; j++) {
+                    tagname = cleanupTagName(albumtagslist[j].name);
+                    if (tagname == tag) {
+                        albums.push(album);
+                        break;
+                    }
+                }
+            }
+            if (albumsready == numalbums) checkReady();
+        };
+        for (var i = 0; i < numalbums; i++) {   
+            var album = data.topalbums.album[i];       
+            fetchTagsForAlbum(album, null, onAlbumTagsReady);
+        }
+    };
+    
+    var onTracksDone = function (data) {
+        console.log("got " + data.toptracks.track.length + " tracks");
+        tracks = [];
+        numtracks = Math.min(data.toptracks.track.length, maxlen);
+        tracksready = 0;
+        var onTrackTagsReady = function (track) {
+            tracksready++;
+            var trackID = getTrackID(track);
+            tags = tagsByTrack[trackID];
+            if (tags) {
+                var tracktaglist = tags.toptags.tag;
+                for (var j = 0; j < tracktaglist.length; j++) {
+                    tagname = cleanupTagName(tracktaglist[j].name);
+                    if (tagname == tag) {
+                        tracks.push(track);
+                        break;
+                    }
+                }
+            }
+            if (tracksready == numtracks) checkReady();
+        };
+        for (var i = 0; i < numtracks; i++) {   
+            var track = data.toptracks.track[i];       
+            fetchTagsForTrack(track, null, onTrackTagsReady);
+        }
+    };
+    
     
     fetchTopArtists(username, count, period, onArtistsDone);
+    fetchTopAlbums(username, count, period, onAlbumsDone);
+    fetchTopTracks(username, count, period, onTracksDone);
 }
 
 function fetchTopArtists(username, count, period, callback) {
@@ -75,6 +160,7 @@ function fetchTopArtists(username, count, period, callback) {
     var cachekey = username + "-" + count + "-" + period;
     if (topArtists[cachekey]) {
         callback(topArtists[cachekey]);
+        return;
     }
     console.log("Fetching " + count + " top " + period + " artists for " + username + "...");
     $.ajax({ 
@@ -99,6 +185,66 @@ function fetchTopArtists(username, count, period, callback) {
     );
 }
 
+function fetchTopAlbums(username, count, period, callback) {
+    count = Math.min(count, maxPeriodArtistCount);
+    var cachekey = username + "-" + count + "-" + period;
+    if (topAlbums[cachekey]) {
+        callback(topAlbums[cachekey]);
+        return;
+    }
+    console.log("Fetching " + count + " top " + period + " albums for " + username + "...");
+    $.ajax({ 
+        type: 'POST',
+        url: 'https://ws.audioscrobbler.com/2.0/',
+        data: 'method=user.gettopalbums&' +
+               'user=' + username + '&' +
+               'limit=' + count + '&' +
+               'period=' + period + '&' +
+               'api_key=' + apiKey + '&' +
+               'format=json',
+        dataType: 'jsonp',
+        success: function(data) {
+            console.log("Top albums fetched!");
+            topAlbums[cachekey] = data;
+            callback(data);
+        },
+        error: function(code, message){
+            console.log("Failed to fetch top albums.");
+            showError("Failed to fetch top albums");
+        }}
+    );
+}
+
+function fetchTopTracks(username, count, period, callback) {
+    count = Math.min(count, maxPeriodArtistCount);
+    var cachekey = username + "-" + count + "-" + period;
+    if (topTracks[cachekey]) {
+        callback(topTracks[cachekey]);
+        return;
+    }
+    console.log("Fetching " + count + " top " + period + " tracks for " + username + "...");
+    $.ajax({ 
+        type: 'POST',
+        url: 'https://ws.audioscrobbler.com/2.0/',
+        data: 'method=user.gettoptracks&' +
+               'user=' + username + '&' +
+               'limit=' + count + '&' +
+               'period=' + period + '&' +
+               'api_key=' + apiKey + '&' +
+               'format=json',
+        dataType: 'jsonp',
+        success: function(data) {
+            console.log("Top tracks fetched!");
+            topTracks[cachekey] = data;
+            callback(data);
+        },
+        error: function(code, message){
+            console.log("Failed to fetch top tracks.");
+            showError("Failed to fetch top tracks");
+        }}
+    );
+}
+
 function fetchTagsForCloud(artists, username, count, period) {
     var totalartists = artists.topartists.artist.length;
     var artistsready = 0;
@@ -108,7 +254,7 @@ function fetchTagsForCloud(artists, username, count, period) {
         showLoaded(artistsready / totalartists * 100);
         if (artistsready == totalartists) {
             buildCloudVis(artists, username, count, period);
-        }        
+        }
     };
     
     var artist;
@@ -178,14 +324,14 @@ function fetchTagsForBin(bin, artistsByBin, binType) {
 }
 
 function fetchTagsForArtist(artist, okCallback, responseCallback) {
-    if (!working)
-        return;
     if (tagsByArtist[getArtistID(artist)]) {
         if (okCallback)
             okCallback(artist, tagsByArtist[getArtistID(artist)]);
         responseCallback(artist);
         return;
     }
+    
+    console.log("Fetching tags for artist " + artist.name);
     
     var showCallError = function () {
         console.log("Failed to fetch tags for " + artist.name + ".");
@@ -218,6 +364,88 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
     });
 }
 
+function fetchTagsForAlbum(album, okCallback, responseCallback) {
+    if (tagsByAlbum[getAlbumID(album)]) {
+        if (okCallback)
+            okCallback(album, tagsByAlbum[getAlbumID(album)]);
+        responseCallback(album);
+        return;
+    }
+    
+    console.log("Fetching tags for album " + album.name);
+    
+    var showCallError = function () {
+        console.log("Failed to fetch tags for " + album.name + ".");
+        showError("Failed to fetch tags for " + album.name + ".");
+    }
+    
+    $.ajax({
+        type: 'POST',
+        url: 'https://ws.audioscrobbler.com/2.0/',
+        data: 'method=album.gettoptags&' +
+           'album=' + encodeURIComponent(album.name) + '&' + 
+           'artist=' + encodeURIComponent(album.artist.name) + '&' +
+           'mbid=' + album.mbid + '&' +
+           'api_key=' + apiKey + '&' +
+           'format=json',
+        dataType: 'jsonp',
+        success: function(data) {
+            if (data.toptags) {
+                tagsByAlbum[getAlbumID(album)] = data;
+                if (okCallback)
+                    okCallback(album, data);
+            } else {
+                showCallError();
+            }
+            responseCallback(album);
+        },
+        error: function(code, message){
+            showCallError();
+            responseCallback(album);
+        }
+    });
+}
+
+function fetchTagsForTrack(track, okCallback, responseCallback) {
+    if (tagsByTrack[getTrackID(track)]) {
+        if (okCallback)
+            okCallback(track, tagsByTrack[getTrackID(track)]);
+        responseCallback(track);
+        return;
+    }
+    
+    var showCallError = function () {
+        console.log("Failed to fetch tags for " + track.name + ".");
+        showError("Failed to fetch tags for " + track.name + ".");
+    }
+    
+    $.ajax({
+        type: 'POST',
+        url: 'https://ws.audioscrobbler.com/2.0/',
+        data: 'method=track.gettoptags&' +
+           'track=' + encodeURIComponent(track.name) + '&' + 
+           'artist=' + encodeURIComponent(track.artist.name) + '&' +
+           'mbid=' + track.mbid + '&' +
+           'api_key=' + apiKey + '&' +
+           'format=json',
+        dataType: 'jsonp',
+        success: function(data) {
+            if (data.toptags) {
+                tagsByTrack[getTrackID(track)] = data;
+                if (okCallback)
+                    okCallback(track, data);
+            } else {
+                showCallError();
+            }
+            responseCallback(track);
+        },
+        error: function(code, message){
+            showCallError();
+            responseCallback(track);
+        }
+    });
+}
+
 function buildCloudVis(artists, username, count, period) {
     if (!working)
         return;
@@ -234,8 +462,8 @@ function buildCloudVis(artists, username, count, period) {
     $("#sec_vis").append("<ul>");
     for (var i = 0; i < sortedNames.length; i++) {
         var tagname = sortedNames[i];
-        var count = tagcounts[tagname];
-        var tagsize = Math.round(count / tagcounttotal * 500);
+        var tagcount = tagcounts[tagname];
+        var tagsize = Math.round(tagcount / tagcounttotal * 500);
         tagsize = Math.max(Math.min(10, tagsize), 1);
         var tagclass = "tag-size-" + tagsize;
         var subTagCloudArgs = "event, '" + username + "', '" + count + "', '" + period + "', '" + tagname + "'";
@@ -375,15 +603,16 @@ function buildSubCloudVis(artists, albums, tracks) {
     container.append("<ul id='sub-tag-cloud-albums' class='subcloud flex-item'>");
     var ulalbums = $("#sub-tag-cloud-albums");
     for (var i = 0; i < albums.length; i++) {
-        var name = albums[i];
+        var album = albums[i];
+        var name = album.name;
         appendToCloud(name, ulalbums);
     }
     
     container.append("<ul id='sub-tag-cloud-tracks' class='subcloud flex-item'>");
     var ultracks = $("#sub-tag-cloud-tracks");
     for (var i = 0; i < tracks.length; i++) {
-        var name = tracks[i];
-        appendToCloud(name, ultracks);
+        var track = tracks[i];
+        appendToCloud(track.name, ultracks);
     }
     
     console.log("Subvis done.");

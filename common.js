@@ -176,6 +176,21 @@ function getArtistID(artist) {
         return simplifyString(artist.name);
 }
 
+function getAlbumID(album) {
+    if (album.mbid) 
+        return album.mbid;
+    else
+        return getArtistID(album.artist) + "-" + simplifyString(album.name);
+}
+
+function getTrackID(track) {
+    if (track.mbid) 
+        return track.mbid;
+    else
+        return getArtistID(track.artist) + "-" + simplifyString(track.name);
+    
+}
+
 function getArtistNameID(artistname) {
     return "artist-" + simplifyString(artistname);
 }
