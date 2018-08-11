@@ -54,8 +54,8 @@ function selectVis(evt, vis) {
     var showInputNumArtists = false;
     var showInputArtistPeriod = false;
     var showInputTagFilters = false;
+    
     switch (vis) {
-        
         case vistypeTimelineT:
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
             textHeader = "Tag Timeline";
@@ -63,7 +63,7 @@ function selectVis(evt, vis) {
             break;
         
         case vistypeCloud:
-            textVisIntro = "A simple tag cloud based on a user's top artists.";
+            textVisIntro = "A tag cloud based on a user's top artists. Click on a tag to open clouds showing top artists, albums and tracks the user has listened with that tag.";
             textHeader = "Tag Cloud";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
@@ -76,7 +76,7 @@ function selectVis(evt, vis) {
             break;
         
         case vistypeAlbumChart:
-            textVisIntro = "Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one. This handly little app will list your top artists, all of their albums, and highlight the ones you haven't listened to.";
+            textVisIntro = "A list of albums by a user's top artists, highlighted by number of listens. Do you ever miss the news that an artist you like has released a new album? Or perhaps you've overlooked an older one.";
             textHeader = "Album Charter";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
@@ -93,6 +93,7 @@ function selectVis(evt, vis) {
 
 function startVis() {
     clearVis();
+    clearSubVis();
     showError("");
     var selectionsOK = getSelections();
     if (!selectionsOK)
@@ -108,19 +109,24 @@ function startVis() {
         makeTagCloud(username, artistlimit, period);
     else if(vistype === vistypeTimelineT)
         makeTagTimeline(username);
-    else if(vistype === vistypeTimelineA) {
+    else if(vistype === vistypeTimelineA)
         makeArtistTimeline(username);
-    } else if (vistype === vistypeAlbumChart)
+    else if (vistype === vistypeAlbumChart) 
         makeAlbumChart(username, artistlimit, period);
 }
 
 function cancelVis() {
     stopLoading('Cancelled.','');
     clearVis();
+    clearSubVis();
 }
 
 function clearVis() {
     $("#sec_vis").children().remove();
+}
+
+function clearSubVis() {
+    $("#sec_sub_vis").toggle(false).children().remove();
 }
 
 function getSelections() {

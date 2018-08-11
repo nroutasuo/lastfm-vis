@@ -6,7 +6,7 @@
 */
 
 // constants
-var maxWeeklyTagArtistCount = 25;
+var maxWeeklyTagArtistCount = 25; 
 var maxPeriodArtistCount = 500;
 var maxTimelineBinArtistCount = 250;
 var maxTagsInCloud = 50;
@@ -16,13 +16,14 @@ var maxTagTimelineLines = 100;
 var tagsByArtist = {};
 
 // reset depending on selections
+var topArtists = {};
 var tagsPerBin = {};
 var filteredTags = [];
 
 function makeTagCloud(username, count, period) {
     filteredTags = [];
     var onArtistsDone = function (data) {
-        fetchTagsForCloud(data);
+        fetchTagsForCloud(data, username, count, period);
     }
     fetchTopArtists(username, count, period, onArtistsDone);
 }
@@ -38,8 +39,43 @@ function makeTagTimeline(username) {
     fetchWeeklyCharts(username, onChartsDone);
 }
 
+function makeSubTagCloud(event, username, count, period, tag) {
+    console.log("making sub tag cloud: " + username + ", " + count + ", " + period + " " + tag);
+    
+    var artists = null;
+    var albums = [ "Album 1" ];
+    var tracks = [ "Track 1", "Track 2", "Track 3"];
+    
+    var onArtistsDone = function (data) {
+        console.log("got " + data.topartists.artist.length + " artists");
+        artists = [];
+        for (var i = 0; i < data.topartists.artist.length; i++) {
+            var artist = data.topartists.artist[i];
+            var artistID = getArtistID(artist);
+            var tags = tagsByArtist[artistID];
+            if (!tags) continue;
+            artisttaglist = tags.toptags.tag;
+            for (var j = 0; j < artisttaglist.length; j++) {
+                tagname = cleanupTagName(artisttaglist[j].name);
+                if (tagname == tag) {
+                    artists.push(artist);
+                    break;
+                }
+            }
+            
+        }
+        buildSubCloudVis(artists, albums, tracks);
+    }
+    
+    fetchTopArtists(username, count, period, onArtistsDone);
+}
+
 function fetchTopArtists(username, count, period, callback) {
     count = Math.min(count, maxPeriodArtistCount);
+    var cachekey = username + "-" + count + "-" + period;
+    if (topArtists[cachekey]) {
+        callback(topArtists[cachekey]);
+    }
     console.log("Fetching " + count + " top " + period + " artists for " + username + "...");
     $.ajax({ 
         type: 'POST',
@@ -53,6 +89,7 @@ function fetchTopArtists(username, count, period, callback) {
         dataType: 'jsonp',
         success: function(data) {
             console.log("Top artists fetched!");
+            topArtists[cachekey] = data;
             callback(data);
         },
         error: function(code, message){
@@ -62,7 +99,7 @@ function fetchTopArtists(username, count, period, callback) {
     );
 }
 
-function fetchTagsForCloud(artists) {
+function fetchTagsForCloud(artists, username, count, period) {
     var totalartists = artists.topartists.artist.length;
     var artistsready = 0;
     
@@ -70,7 +107,7 @@ function fetchTagsForCloud(artists) {
         artistsready++;
         showLoaded(artistsready / totalartists * 100);
         if (artistsready == totalartists) {
-            buildCloudVis(artists);
+            buildCloudVis(artists, username, count, period);
         }        
     };
     
@@ -181,7 +218,7 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
     });
 }
 
-function buildCloudVis(artists) {
+function buildCloudVis(artists, username, count, period) {
     if (!working)
         return;
     
@@ -192,6 +229,7 @@ function buildCloudVis(artists) {
     var sortedNames = getSortedTagNames(tagcounts, maxTagsInCloud);
     
     clearVis();
+    clearSubVis();
     
     $("#sec_vis").append("<ul>");
     for (var i = 0; i < sortedNames.length; i++) {
@@ -200,9 +238,11 @@ function buildCloudVis(artists) {
         var tagsize = Math.round(count / tagcounttotal * 500);
         tagsize = Math.max(Math.min(10, tagsize), 1);
         var tagclass = "tag-size-" + tagsize;
-        var li = $("<li class='tag " + tagclass + "'>" + tagname + "</li>");
+        var subTagCloudArgs = "event, '" + username + "', '" + count + "', '" + period + "', '" + tagname + "'";
+        var li = $("<li class='tag " + tagclass + "'><button onclick=\"makeSubTagCloud(" + subTagCloudArgs +")\">" + tagname + "</button></li>");
         $("#sec_vis ul").append(li);
     }
+    
     stopLoading("Done.", "");
 }
 
@@ -309,6 +349,46 @@ function buildTagTimelineVis(artistsByBin, binType) {
 		.attr("class", "y axis")
         .attr("transform", "translate(0,0)")
 		.call(yAxis);
+}
+
+function buildSubCloudVis(artists, albums, tracks) {
+    console.log("Building subvis...")
+    
+    clearSubVis();
+    
+    var container = $("<div class='flex-container'>").appendTo($("#sec_sub_vis"));
+    
+    var appendToCloud = function (name, ul) {
+        var tagclass = "tag-size-2";
+        var li = $("<li class='tag " + tagclass + "'><span>" + name + "</span></li>");
+        ul.append(li);
+    }
+    
+    
+    container.append("<ul id='sub-tag-cloud-artists' class='subcloud flex-item'>");
+    var ulartists = $("#sub-tag-cloud-artists");
+    for (var i = 0; i < artists.length; i++) {
+        var artist = artists[i];
+        appendToCloud(artist.name, ulartists);
+    }
+    
+    container.append("<ul id='sub-tag-cloud-albums' class='subcloud flex-item'>");
+    var ulalbums = $("#sub-tag-cloud-albums");
+    for (var i = 0; i < albums.length; i++) {
+        var name = albums[i];
+        appendToCloud(name, ulalbums);
+    }
+    
+    container.append("<ul id='sub-tag-cloud-tracks' class='subcloud flex-item'>");
+    var ultracks = $("#sub-tag-cloud-tracks");
+    for (var i = 0; i < tracks.length; i++) {
+        var name = tracks[i];
+        appendToCloud(name, ultracks);
+    }
+    
+    console.log("Subvis done.");
+    
+    $("#sec_sub_vis").toggle(true);
 }
 
 function GetTimelineData(artistsByBin, tagsPerBin, binType) {
