@@ -217,7 +217,7 @@ function getAlbumInfo(topalbums, artist, username) {
                     }
                     var filter2 = filterAlbumByDetailedInfo(data.album, topalbums.album, artist);
                     if(filter2.length <= 0)
-                        album_infos[getAlbumID(album.name)] = data;
+                        album_infos[getAlbumID(album)] = data;
                     else
                         registerFiltered(filter2, album, artist.name);                            
                     getNextAlbum(i+1);
@@ -244,7 +244,7 @@ function displayAlbums(topalbums, artist) {
         var displayalbums = [];        
         for (index = 0; index < Math.min(topalbums.album.length, albumlimit_display); ++index) {
             var name = topalbums.album[index].name;
-            var id = getAlbumID(name);
+            var id = getAlbumID(topalbums.album[index]);
             if(album_infos[id])
             {
                 displayalbums[displayalbums.length] = topalbums.album[index];
@@ -254,11 +254,11 @@ function displayAlbums(topalbums, artist) {
         // Sort albums according to release year
         displayalbums.sort(function(a, b) {
             a_year = 0;
-            if(album_infos[getAlbumID(a.name)])
-                a_year = getReleaseYear(album_infos[getAlbumID(a.name)]);
+            if(album_infos[getAlbumID(a)])
+                a_year = getReleaseYear(album_infos[getAlbumID(a)]);
             b_year = 0;
-            if(album_infos[getAlbumID(b.name)])
-                b_year = getReleaseYear(album_infos[getAlbumID(b.name)]);
+            if(album_infos[getAlbumID(b)])
+                b_year = getReleaseYear(album_infos[getAlbumID(b)]);
             return a_year - b_year;
         });
         
@@ -272,7 +272,7 @@ function displayAlbums(topalbums, artist) {
         
         yearSpan.text(function(d) {
             var name = d.name;
-            var id = getAlbumID(name);
+            var id = getAlbumID(d);
             var info = album_infos[id].album;
             var year = getReleaseYear(album_infos[id]);
             var url = info.url;
@@ -294,7 +294,7 @@ function displayAlbums(topalbums, artist) {
         
         albumDiv.attr("style", function(d) {
             var name = d.name;
-            var id = getAlbumID(name);
+            var id = getAlbumID(d);
             var info = album_infos[id].album;
             var playcount = info.playcount;
             var artist_total_playcount = artist_infos[getArtistNameID(artist)].stats.playcount;
@@ -306,7 +306,7 @@ function displayAlbums(topalbums, artist) {
         
         albumDiv.attr('class', function(d) {
             var name = d.name;
-            var id = getAlbumID(name);
+            var id = getAlbumID(d);
             var info = album_infos[id].album;
             var listens = info.userplaycount;
             if(listens > manylimit) return "album many-listens";
@@ -514,7 +514,9 @@ function registerFiltered(reason, album, artistName) {
             }
         }
         
+        var detailmaxlen = 500;
         filtered = filtered.substr(0, filtered.length-2);
+        if (filtered.length > detailmaxlen) filtered = filtered.substr(0, detailmaxlen) + "...";
         
         showVisDetails("Filtered albums: " + filtered);
         // console.log("Filtered album [" + reason + "]: " + album.name + " (" + album.playcount + " scrobbles by all users)");
