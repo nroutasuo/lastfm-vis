@@ -20,7 +20,7 @@ var tagsByTrack = {};
 var topArtists = {};
 var topAlbums = {};
 var topTracks = {};
-var tagNameCache = { stripped: {}, cleaned: {} };
+var tagNameCache = { stripped: {}, cleaned: {}, combined: {} };
 
 // reset depending on selections
 var tagsPerBin = {};
@@ -531,6 +531,7 @@ function buildTagTimelineVis(artistsByBin, binType) {
     // Add the tags
     var getArtistsString = function (d) {
         var result = "";
+		if (!d.artists) return result;
         for (var i = 0; i < Math.min(d.artists.length, 3); i++) {
             result += (i + 1) + ") " + d.artists[i].name + " (" + d.artists[i].totalplaycount + " plays)<br/>";
         }
@@ -719,9 +720,9 @@ function GetTimelineData(artistsByBin, tagsPerBin, binType) {
         return valB - valA;
     });
     
-    console.log("timeline data:");
-    console.log(dataByTag);
-    console.log(dataByBin);
+    //console.log("timeline data:");
+    //console.log(dataByTag);
+    //console.log(dataByBin);
     return { byBin : dataByBin, byTag: dataByTag };
 }
 
@@ -794,6 +795,8 @@ function stripTagName(name) {
 }
 
 function combineTagName(name, counts) {
+	if (tagNameCache.combined[name]) 
+		return tagNameCache.combined[name];
 	var stripped1 = stripTagName(name);
 	var bestMatch = name;
 	var bestMatchCounts = 0;
@@ -807,6 +810,7 @@ function combineTagName(name, counts) {
 			}
 		}
 	}
+	tagNameCache.combined[name] = bestMatch;
 	return bestMatch;
 }
 
