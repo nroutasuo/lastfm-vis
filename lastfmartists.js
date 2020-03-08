@@ -5,7 +5,7 @@
 * Last.fm (https://www.last.fm/api)
 */
 
-var maxArtistTimelineLines = 300;
+var maxArtistTimelineLines = 100;
 var maxWeeklyArtistCount = 50;
 
 function makeArtistTimeline(username) {
@@ -31,7 +31,6 @@ function buildArtistTimelineVis(artistsByBin, binType) {
     var datas = GetArtistTimelineData(artistsByBin, binType);
     var dataByBin = datas.byBin;
     var dataByArtist = datas.byArtist;
-    // TODO based on what to filter artists?
     var dataByArtistFiltered = dataByArtist.slice(0, maxArtistTimelineLines);
     
     // Set up SVH

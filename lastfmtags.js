@@ -10,7 +10,7 @@ var maxWeeklyTagArtistCount = 25;
 var maxPeriodArtistCount = 500;
 var maxTimelineBinArtistCount = 250;
 var maxTagsInCloud = 50;
-var maxTagTimelineLines = 100;
+var maxTagTimelineLines = 50;
 var RETRY_DELAY = 100;
 
 // keep between visualizations
@@ -519,7 +519,7 @@ function buildTagTimelineVis(artistsByBin, binType) {
     var	parseDate = d3.time.format("%Y-%m").parse;
     var	x = d3.time.scale().range([0, width]);
 	x.domain(d3.extent(dataByBin, function(d) { return parseDate(d.date); }));
-    var	y = d3.scale.linear().domain([0, 100]).range([height, 0]);
+    var	y = d3.scale.linear().domain([0, 100]).range([height, 0]);	
      
     // Define the line
     var	tagline = d3.svg.line()
