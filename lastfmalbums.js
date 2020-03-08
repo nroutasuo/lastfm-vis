@@ -41,6 +41,7 @@ function makeAlbumChart(username, count, period) {
             return true;
         }, 
         error: function (code, message) {
+			console.log("Getting top artists failed  " + code + " " + message);
             stopLoading("", message);
             return false;
         }
@@ -125,7 +126,7 @@ function getArtistInfos (topartists, username) {
                     }
                 }, 
                 error: function (code, message) {
-                    console.log("Fetching info for artist " + artist.name + " failed.");
+                    console.log("Fetching info for artist " + artist.name + " failed. " + code + " " + message);
                     showError(message + " (Error code: " + code + ")");
                 }
             });
@@ -164,7 +165,7 @@ function getArtistAlbums(topartists, username )
                 }
             }, 
             error: function(code, message) {
-                console.log("Fetching albums info for artist " + artist.name + " failed.");
+                console.log("Fetching albums info for artist " + artist.name + " failed. " + code + " " + message);
                 showError(message + " (Error code: " + code + ")");
             }
         });
@@ -223,7 +224,7 @@ function getAlbumInfo(topalbums, artist, username) {
                     getNextAlbum(i+1);
                 }, 
                 error: function(code, message) {
-                    console.log("Fetching album info for album " + album.name + " by " + artist.name + " failed.");
+                    console.log("Fetching album info for album " + album.name + " by " + artist.name + " failed. " + code + " " + message);
                     showError(message + " (Error code: " + code + ")");
                 }
 			});

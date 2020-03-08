@@ -181,7 +181,7 @@ function fetchTopArtists(username, count, period, callback) {
             callback(data);
         },
         error: function(code, message){
-            console.log("Failed to fetch top artists.");
+            console.log("Failed to fetch top artists. " + code + " " + message);
             showError("Failed to fetch top artists");
         }}
     );
@@ -211,7 +211,7 @@ function fetchTopAlbums(username, count, period, callback) {
             callback(data);
         },
         error: function(code, message){
-            console.log("Failed to fetch top albums.");
+            console.log("Failed to fetch top albums. " + code + " " + message);
             showError("Failed to fetch top albums");
         }}
     );
@@ -241,7 +241,7 @@ function fetchTopTracks(username, count, period, callback) {
             callback(data);
         },
         error: function(code, message){
-            console.log("Failed to fetch top tracks.");
+            console.log("Failed to fetch top tracks. " + code + " " + message);
             showError("Failed to fetch top tracks");
         }}
     );
@@ -275,7 +275,7 @@ function fetchTagsForBin(bin, artistsByBin, binType) {
     if (!working)
         return;
     
-    var artistlist = artistsByBin[bin];
+    var artistlist = artistsByBin[bin] || [];
     artistlist = artistlist.sort(function(a, b) {
         return b.totalplaycount - a.totalplaycount;
     });
@@ -509,7 +509,7 @@ function buildTagTimelineVis(artistsByBin, binType) {
     var dataByBin = datas.byBin;
     var dataByTag = datas.byTag;
     var dataByTagFiltered = dataByTag.slice(0, maxTagTimelineLines);
-    
+	
     // Set up SVG
     var svg = setupSVG(bins.length);
     var height = getChartHeight(bins.length);
