@@ -56,6 +56,15 @@
             <option value="12month">12 Months</option>
         </select>
     </span>
+	<span id="input_maxperiod" class="inputcontainer" style="display:none;">
+		<label>Max period:</label>
+		<select id="maxperiod">
+            <option value="1">1 Year</option>
+            <option value="3">3 Years</option>
+            <option value="5" selected="selected">5 Years</option>
+            <option value="overall">All</option>
+		</select>
+	</span>
     <span id="input_tagfilters" class="inputcontainer" style="display:none">
         <span>
             <label><input type="checkbox" id="filter-countries" value="countries">
@@ -79,7 +88,7 @@
 	<p id="infomsg"></p>
 </section>
 
-<section id="sec_vis">
+<section id="sec_vis" style="display: none;">
 </section>
 
 <section id="sec_sub_vis" style="display: none;">

@@ -14,6 +14,7 @@ var vistypeAlbumChart = "albums";
 var username = "";
 var artistlimit = 10;
 var period = "overall";
+var maxperiod = "overall";
 var filterCountries = false;
 var filterDecades = false;
 
@@ -53,6 +54,7 @@ function selectVis(evt, vis) {
     var textHeader = "";
     var showInputNumArtists = false;
     var showInputArtistPeriod = false;
+	var showInputMaxPeriod = false;
     var showInputTagFilters = false;
     
     switch (vis) {
@@ -60,6 +62,7 @@ function selectVis(evt, vis) {
             textVisIntro = "A timeline of tags based on artist tags on a user's weekly charts.";
             textHeader = "Tag Timeline";
             showInputTagFilters = true;
+			showInputMaxPeriod = true;
             break;
         
         case vistypeCloud:
@@ -73,6 +76,7 @@ function selectVis(evt, vis) {
         case vistypeTimelineA:
             textVisIntro = "A timeline of artists based on a user's weekly charts.";
             textHeader = "Artist timeline";
+			showInputMaxPeriod = true;
             break;
         
         case vistypeAlbumChart:
@@ -88,6 +92,7 @@ function selectVis(evt, vis) {
     
     fadeToggleIf($("#input_numartists"), showInputNumArtists);
     fadeToggleIf($("#input_artistperiod"), showInputArtistPeriod);
+    fadeToggleIf($("#input_maxperiod"), showInputMaxPeriod);
     fadeToggleIf($("#input_tagfilters"), showInputTagFilters);
 }
 
@@ -102,8 +107,9 @@ function startVis() {
     working = true;
 	$("#visheader").text(makeVisTitle());
     $("#visdetailstype").text(getVisTypeDetails(vistype));
-    showLoaded(0);
+    showLoaded(0)
     showVisDetails("");
+	$("#sec_vis").toggle(true);
     
     if (vistype === vistypeCloud)
         makeTagCloud(username, artistlimit, period);
@@ -146,6 +152,7 @@ function getSelections() {
     }
     
     period = $("#artistperiod").val();
+	maxperiod = $("#maxperiod").val();
     
     filterCountries = $("#filter-countries").is(':checked');
     filterDecades = $("#filter-decades").is(':checked');

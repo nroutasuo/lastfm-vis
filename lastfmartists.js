@@ -6,7 +6,7 @@
 */
 
 var maxArtistTimelineLines = 300;
-var maxWeeklyArtistCount = 100;
+var maxWeeklyArtistCount = 50;
 
 function makeArtistTimeline(username) {
     var onChartsDone = function (data) {

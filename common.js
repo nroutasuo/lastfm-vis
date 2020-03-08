@@ -8,7 +8,6 @@ var chartsByUser = {};
 var artistChartsByUser = {};
 
 // constants
-var maxWeeklyChartsToFetch = 52 * 15;
 var minWeeklyArtistPlayCount = 1;
 var binTypeYears = "years";
 var binTypeMonths = "months";
@@ -46,9 +45,12 @@ function fetchWeeklyCharts(user, callback) {
 function fetchWeeklyArtistCharts(username, charts, doneCallback, loadingProcessFactor, maxWeeklyArtists) {
     if (!working)
         return;
+	
+	var maxYears = maxperiod == "overall" ? 20 : parseInt(maxperiod) || 20;
     
-    console.log("Fetching weekly artists charts for " + username);
+    console.log("Fetching weekly artists charts for " + username + " (max period: " + maxperiod + ", max years: " + maxYears + ")");
     
+	var maxWeeklyChartsToFetch = maxYears * 52;
     var chartsToGet = Math.min(charts.chart.length, maxWeeklyChartsToFetch);
     var chartsDone = 0;
     var artistsByYear = {};
