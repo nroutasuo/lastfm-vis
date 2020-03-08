@@ -20,6 +20,7 @@ var tagsByTrack = {};
 var topArtists = {};
 var topAlbums = {};
 var topTracks = {};
+var tagNameCache = { stripped: {}, cleaned: {} };
 
 // reset depending on selections
 var tagsPerBin = {};
@@ -778,20 +779,27 @@ function getSortedTagNames(tagcounts, maxTags) {
     return names.slice(0, maxTags);
 }
 
+// for display
 function cleanupTagName(name) {
     return name.toLowerCase().replace(/-/g, " ");
 }
 
+// for comparison
+function stripTagName(name) {
+	if (tagNameCache.stripped[name])
+		return tagNameCache.stripped[name];
+	var result = cleanupTagName(name).replace(/ /g, "");
+	tagNameCache.stripped[name] = result;
+	return result;
+}
+
 function combineTagName(name, counts) {
-	var stripName = function (s) {
-		return cleanupTagName(s).replace(/ /g, "");
-	};
-	var stripped1 = stripName(name);
+	var stripped1 = stripTagName(name);
 	var bestMatch = name;
 	var bestMatchCounts = 0;
 	for (var n in counts) {
 		if (n == name) continue;
-		var stripped2 = stripName(n);
+		var stripped2 = stripTagName(n);
 		if (stripped1 == stripped2) {
 			if (counts[n] > bestMatchCounts) {
 				bestMatch = n;
