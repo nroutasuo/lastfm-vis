@@ -56,6 +56,7 @@ function selectVis(evt, vis) {
     var showInputArtistPeriod = false;
 	var showInputMaxPeriod = false;
     var showInputTagFilters = false;
+	var defaultNumArtists = 50;
     
     switch (vis) {
         case vistypeTimelineT:
@@ -84,6 +85,7 @@ function selectVis(evt, vis) {
             textHeader = "Album Charter";
             showInputNumArtists = true;
             showInputArtistPeriod = true;
+			defaultNumArtists = 20;
             break;
     }
     
@@ -94,6 +96,8 @@ function selectVis(evt, vis) {
     fadeToggleIf($("#input_artistperiod"), showInputArtistPeriod);
     fadeToggleIf($("#input_maxperiod"), showInputMaxPeriod);
     fadeToggleIf($("#input_tagfilters"), showInputTagFilters);
+	
+	if (showInputArtistPeriod) $("#artistcount").val(defaultNumArtists);
 }
 
 function startVis() {
