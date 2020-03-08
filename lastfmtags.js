@@ -725,7 +725,7 @@ function getTagCounts(tagsByArtist, artists) {
                 recordFilteredTag(tagname);
                 continue;
             }
-            
+			tagname = combineTagName(tagname, tagcounts);            
             if (!tagcounts[tagname]) {
                 tagcounts[tagname] = 0;
             }
@@ -760,6 +760,26 @@ function getSortedTagNames(tagcounts, maxTags) {
 
 function cleanupTagName(name) {
     return name.toLowerCase().replace(/-/g, " ");
+}
+
+function combineTagName(name, counts) {
+	var stripName = function (s) {
+		return cleanupTagName(s).replace(/ /g, "");
+	};
+	var stripped1 = stripName(name);
+	var bestMatch = name;
+	var bestMatchCounts = 0;
+	for (var n in counts) {
+		if (n == name) continue;
+		var stripped2 = stripName(n);
+		if (stripped1 == stripped2) {
+			if (counts[n] > bestMatchCounts) {
+				bestMatch = n;
+				bestMatchCounts = counts[n];
+			}
+		}
+	}
+	return bestMatch;
 }
 
 function recordFilteredTag(name) {
