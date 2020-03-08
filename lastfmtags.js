@@ -11,6 +11,7 @@ var maxPeriodArtistCount = 500;
 var maxTimelineBinArtistCount = 250;
 var maxTagsInCloud = 50;
 var maxTagTimelineLines = 100;
+var RETRY_DELAY = 100;
 
 // keep between visualizations
 var tagsByArtist = {};
@@ -323,7 +324,9 @@ function fetchTagsForBin(bin, artistsByBin, binType) {
     }
 }
 
-function fetchTagsForArtist(artist, okCallback, responseCallback) {
+function fetchTagsForArtist(artist, okCallback, responseCallback, tryNum) {
+	tryNum = tryNum || 0;
+	var canRetry = tryNum < 1;
     if (tagsByArtist[getArtistID(artist)]) {
         if (okCallback)
             okCallback(artist, tagsByArtist[getArtistID(artist)]);
@@ -331,35 +334,52 @@ function fetchTagsForArtist(artist, okCallback, responseCallback) {
         return;
     }
     
-    console.log("Fetching tags for artist " + artist.name);
+    console.log("Fetching tags for artist " + artist.name + " (try: " + tryNum + ")");
     
-    var showCallError = function () {
-        console.log("Failed to fetch tags for " + artist.name + ".");
-        showError("Failed to fetch tags for " + artist.name + ".");
-    }
+    var showCallError = function (code, message, willRetry) {
+        console.log("Failed to fetch tags for " + artist.name + ". " + code + " " + message + ", will retry: " + willRetry);
+		if (!willRetry) {
+			showError("Failed to fetch tags for " + artist.name);
+		}
+    };
+	
+	var doRetry = function () {
+		setTimeout(function () {
+			fetchTagsForArtist(artist, okCallback, responseCallback, tryNum + 1);
+		}, RETRY_DELAY);
+	};
     
     $.ajax({
-        type: 'POST',
+        type: 'GET',
         url: 'https://ws.audioscrobbler.com/2.0/',
         data: 'method=artist.gettoptags&' +
            'artist=' + encodeURIComponent(artist.name) + '&' + 
-           'mbid=' + artist.mbid + '&' +
+           (tryNum ? "" : 'mbid=' + artist.mbid + '&') +
            'api_key=' + apiKey + '&' +
            'format=json',
         dataType: 'jsonp',
         success: function(data) {
             if (data.toptags) {
                 tagsByArtist[getArtistID(artist)] = data;
-                if (okCallback)
+                if (okCallback) {
                     okCallback(artist, data);
+				}
             } else {
-                showCallError();
-            }
+				showCallError(data ? data.error : 0, data ? data.message : "No data", canRetry);
+				if (canRetry) {
+					doRetry();
+					return;
+				}
+			}
             responseCallback(artist);
         },
-        error: function(code, message){
-            showCallError();
-            responseCallback(artist);
+        error: function(code, message) {
+			showCallError(code, message, canRetry)
+			if (canRetry) {
+				doRetry();
+			} else {
+				responseCallback(artist);
+			}
         }
     });
 }
@@ -725,7 +745,7 @@ function getTagCounts(tagsByArtist, artists) {
                 recordFilteredTag(tagname);
                 continue;
             }
-			tagname = combineTagName(tagname, tagcounts);            
+			tagname = combineTagName(tagname, tagcounts);        
             if (!tagcounts[tagname]) {
                 tagcounts[tagname] = 0;
             }
