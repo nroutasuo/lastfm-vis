@@ -194,6 +194,7 @@ function getTrackID(track) {
 }
 
 function getArtistNameID(artistname) {
+	if (!artistname) return null;
     return "artist-" + simplifyString(artistname);
 }
 
@@ -215,6 +216,7 @@ function sortBins(binType) {
 // STRING STUFF
 
 function simplifyString(s) {
+	if (!s) return "";
     return s.toLowerCase().replace(/[ &\.\/\']/g, "");
 }
 

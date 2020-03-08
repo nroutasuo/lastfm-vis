@@ -214,13 +214,13 @@ function getAlbumInfo(topalbums, artist, username) {
                 success: function (data) {
                     if (!data.album) {
                         console.log(data.message + " | " + album.name);
-                        return;
-                    }
-                    var filter2 = filterAlbumByDetailedInfo(data.album, topalbums.album, artist);
-                    if(filter2.length <= 0)
-                        album_infos[getAlbumID(album)] = data;
-                    else
-                        registerFiltered(filter2, album, artist.name);                            
+                    } else {
+						var filter2 = filterAlbumByDetailedInfo(data.album, topalbums.album, artist);
+						if(filter2.length <= 0)
+							album_infos[getAlbumID(album)] = data;
+						else
+							registerFiltered(filter2, album, artist.name);                            
+					}
                     getNextAlbum(i+1);
                 }, 
                 error: function(code, message) {
